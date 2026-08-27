@@ -60,9 +60,6 @@
   .page-header p{margin:4px 0 0;font-size:13px;color:var(--muted)}
   .breadcrumb{font-size:11px;color:var(--muted-2);display:flex;gap:6px;align-items:center;margin-bottom:6px}
   .breadcrumb a{color:var(--muted)}
-  .page-tabs{display:flex;gap:20px;margin-top:14px;border-top:1px solid var(--border);margin-left:-24px;margin-right:-24px;padding:0 24px;overflow:auto}
-  .page-tab{padding:10px 2px 11px;border-bottom:2px solid transparent;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap;margin-bottom:-1px}
-  .page-tab.active{color:var(--primary);border-color:var(--primary);font-weight:600}
   /* Cards */
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
   .card-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface)}
@@ -115,7 +112,32 @@
   .success{background:var(--ok-soft);border:1px solid #a7f3d0;color:var(--ok);padding:10px 12px;border-radius:4px;font-size:13px}
   .empty{padding:32px 16px;text-align:center;color:var(--muted)}
   .hidden{display:none !important}
-  .receipt{max-width:360px;margin:0 auto;background:#fff;padding:22px;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow)}
+  .receipt{max-width:360px;margin:0 auto;background:#fff;padding:22px;border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow)}
+  .control-note{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--muted);line-height:1.5}
+  .control-note strong{color:var(--text);font-weight:600;white-space:nowrap}
+  .policy-note{border-left:3px solid var(--primary)}
+  #app input,#app select,#app textarea{border-radius:4px !important}
+  #app [style*="border-radius:8px"]{border-radius:4px !important}
+  .dashboard-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr);gap:16px;margin-bottom:16px}
+  .chart-area{height:246px;padding:12px 16px}
+  .chart-empty{height:100%;display:grid;place-items:center;color:var(--muted);font-size:13px}
+  .category-list{display:flex;flex-direction:column;gap:14px}
+  .category-row{display:grid;gap:6px}
+  .category-label{display:flex;justify-content:space-between;gap:12px;font-size:13px}
+  .category-label span{color:var(--muted);font-family:var(--mono);font-size:11px;white-space:nowrap}
+  .category-meter{height:5px;background:#e8edf1;overflow:hidden}
+  .category-meter span{display:block;height:100%;background:var(--primary)}
+  .table-action{white-space:nowrap}
+  .section-eyebrow{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);display:flex;align-items:center;gap:10px;margin:0 0 8px}
+  .section-eyebrow::after{content:'';flex:1;height:1px;background:var(--border)}
+  .statusbar{height:32px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;border-top:1px solid var(--shell-border);background:var(--shell);color:#b7c0c5;font-size:11px;position:fixed;right:0;bottom:0;left:0;z-index:40}
+  .statusbar-left{display:flex;align-items:center;gap:10px;min-width:0}
+  .statusbar-right{display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .status-separator{color:#6a7780}
+  .statusbar time{color:#fff;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .statusbar .shellbar-user{padding:2px 8px 2px 2px}
+  .statusbar .shellbar-avatar{width:22px;height:22px;font-size:10px}
+  .menu-toggle{display:none}
   .mono{font-family:var(--mono)}
   @media(max-width:1024px){ .kpi-grid{grid-template-columns:repeat(2,1fr)} .form-grid{grid-template-columns:1fr} }
   @media(max-width:720px){
@@ -329,10 +351,12 @@ function viewNew(){
      \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">\x3ca href="#dashboard">Home\x3c/a> › Create\x3c/div>\x3ch1>New receipt\x3c/h1>\x3cp>Posting date sets the receipt year. Changes are audited.\x3c/p>\x3c/div>\x3c/div>
   \x3c/div>
   \x3cdiv id="newMsg">\x3c/div>
-  \x3cdiv style="display:grid;grid-template-columns:1.15fr .85fr;gap:14px;align-items:start">
-    \x3cdiv class="stack">
-      \x3cdiv class="card">
-        \x3cdiv class="card-head">\x3cdiv>\x3ch3>Customer & Posting \x3cspan style="font-weight:400;color:var(--muted)">· posting date drives fiscal year\x3c/span>\x3c/h3>\x3c/div>\x3c/div>
+  \x3cdiv style="display:grid;grid-template-columns:1.15fr .85fr;gap:20px;align-items:start">
+    \x3cdiv class="stack" style="gap:20px">
+      \x3cdiv>
+        \x3cdiv class="section-eyebrow">Customer and date\x3c/div>
+        \x3cdiv class="card">
+          \x3cdiv class="card-head">\x3ch3>Customer and date\x3c/h3>\x3c/div>
         \x3cdiv class="card-pad stack">
           \x3cdiv class="field">\x3clabel>Customer *\x3c/label>\x3cselect id="n_customer">\x3coption value="">Select customer\x3c/option>${custOpts}\x3c/select>\x3cdiv id="custInfo" class="field-hint">\x3c/div>\x3c/div>
           \x3cdiv id="inlineCustomer" class="hidden" style="padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px">
@@ -344,12 +368,15 @@ function viewNew(){
           \x3cbutton class="btn btn-sec btn-sm" id="nc_open" style="align-self:flex-start">New customer\x3c/button>
           \x3clabel style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500"><input type="checkbox" id="n_useNow" checked> Use current date/time (Asia/Bangkok)\x3c/label>
           \x3cdiv class="field">\x3clabel>Posting date\x3c/label>\x3cinput type="datetime-local" id="n_at" disabled>\x3c/div>
-          \x3cdiv class="field">\x3clabel>Internal note\x3c/label>\x3ctextarea id="n_note" rows="2" placeholder="Optional — visible in object page only">\x3c/textarea>\x3c/div>
-          \x3cdiv class="field">\x3clabel>Payment evidence (optional) JPG/PNG ≤10MB\x3c/label>\x3cinput type="file" id="n_file" accept="image/jpeg,image/jpg,image/png">\x3cdiv id="n_fileHint" class="field-hint">\x3c/div>\x3c/div>
+          \x3cdiv class="field">\x3clabel>Internal note\x3c/label>\x3ctextarea id="n_note" rows="2" placeholder="Optional — visible in receipt details only">\x3c/textarea>\x3c/div>
+          \x3cdiv class="field">\x3clabel>Payment evidence \x3cspan class="field-hint">optional · JPG/PNG · 10MB max\x3c/span>\x3c/label>\x3cinput type="file" id="n_file" accept="image/jpeg,image/jpg,image/png">\x3cdiv id="n_fileHint" class="field-hint">\x3c/div>\x3c/div>
+        \x3c/div>
         \x3c/div>
       \x3c/div>
-      \x3cdiv class="card" style="position:sticky;top:68px">
-        \x3cdiv class="card-head">\x3cdiv>\x3ch3>Line Items\x3c/h3>\x3cp>Price is snapshot — editing catalog won’t change history\x3c/p>\x3c/div>\x3cbutton class="btn btn-sec btn-sm" id="addLine">＋ Add line\x3c/button>\x3c/div>
+      \x3cdiv>
+        \x3cdiv class="section-eyebrow">Line items\x3c/div>
+        \x3cdiv class="card" style="position:sticky;top:68px">
+          \x3cdiv class="card-head">\x3cdiv>\x3ch3>Line items\x3c/h3>\x3cp>Catalog price is copied to the receipt\x3c/p>\x3c/div>\x3cbutton class="btn btn-sec btn-sm" id="addLine">Add line\x3c/button>\x3c/div>
         \x3cdiv class="card-pad">
           \x3cdiv id="lines">\x3c/div>
           \x3cdiv class="divider">\x3c/div>
@@ -468,8 +495,9 @@ function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(
 function viewHistory(){
   return `
   \x3cdiv class="page-header">
-    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Operations › Ledger\x3c/div>\x3ch1>Receipt History\x3c/h1>\x3cp>All postings — filter, audit and export. Cancelled stays searchable but excluded from totals.\x3c/p>\x3c/div>\x3cdiv class="row">\x3cbutton class="btn btn-sec btn-sm" id="h_csv">Export CSV\x3c/button>\x3ca class="btn btn-primary btn-sm" href="#new">＋ Create\x3c/a>\x3c/div>\x3c/div>
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Receipts\x3c/div>\x3ch1>Receipt history\x3c/h1>\x3cp>Search, filter, and export receipts.\x3c/p>\x3c/div>\x3cdiv class="row">\x3cbutton class="btn btn-sec btn-sm" id="h_csv">Export CSV\x3c/button>\x3c/div>\x3c/div>
   \x3c/div>
+  \x3cdiv class="section-eyebrow">Filters\x3c/div>
   \x3cdiv class="card">
     \x3cdiv class="card-pad" style="display:grid;grid-template-columns:1.4fr .7fr .9fr auto;gap:10px;align-items:end">
       \x3cdiv class="field">\x3clabel>Search\x3c/label>\x3cinput id="h_q" placeholder="Document / customer / LINE / X" value="${FILTER.q}">\x3c/div>
@@ -498,12 +526,15 @@ function viewHistory(){
 function viewCustomers(){
   return `
   \x3cdiv class="page-header">
-    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Master Data › Customers\x3c/div>\x3ch1>Customers\x3c/h1>\x3cp>Business partners — LINE / X must be unique while active\x3c/p>\x3c/div>\x3c/div>
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Master data › Customers\x3c/div>\x3ch1>Customers\x3c/h1>\x3cp>Active customers and contact channels.\x3c/p>\x3c/div>\x3c/div>
   \x3c/div>
-  \x3cdiv class="card">
-    \x3cdiv class="card-head">\x3ch3>Create\x3c/h3>\x3c/div>
-    \x3cdiv class="card-pad">
-      \x3cdiv class="form-grid" style="grid-template-columns:1.2fr .8fr .8fr 1fr auto">
+  \x3cdiv style="display:flex;flex-direction:column;gap:20px">
+  \x3cdiv>
+    \x3cdiv class="section-eyebrow">Add customer\x3c/div>
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3ch3>Add customer\x3c/h3>\x3c/div>
+      \x3cdiv class="card-pad">
+        \x3cdiv class="form-grid" style="grid-template-columns:1.2fr .8fr .8fr 1fr auto">
         \x3cdiv class="field">\x3cinput id="c_name" placeholder="Name *">\x3c/div>
         \x3cdiv class="field">\x3cinput id="c_line" placeholder="LINE ID">\x3c/div>
         \x3cdiv class="field">\x3cinput id="c_x" placeholder="X handle">\x3c/div>
@@ -511,16 +542,25 @@ function viewCustomers(){
         \x3cbutton class="btn btn-primary" id="c_add">Create\x3c/button>
       \x3c/div>
       \x3cdiv id="c_msg" style="margin-top:8px">\x3c/div>
+      \x3c/div>
     \x3c/div>
   \x3c/div>
-  \x3cdiv class="card">
-    \x3cdiv class="card-head">\x3cdiv style="flex:1;max-width:380px">\x3cinput id="c_search" placeholder="Search name / code / LINE / X" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;width:100%">\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${STATE.customers.filter(c=>!c.archived_at).length} active\x3c/div>\x3c/div>
+  \x3cdiv>
+    \x3cdiv class="section-eyebrow">Customers · ${STATE.customers.filter(c=>!c.archived_at).length} active\x3c/div>
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3cdiv style="flex:1;max-width:380px">\x3cinput id="c_search" placeholder="Search name / code / LINE / X" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;width:100%">\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${STATE.customers.filter(c=>!c.archived_at).length} active\x3c/div>\x3c/div>
     \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Code\x3c/th>\x3cth>Name\x3c/th>\x3cth>Contact\x3c/th>\x3cth style="text-align:center">Points\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>
-    \x3ctbody id="c_body">\x3c/tbody>\x3c/table>\x3c/div>
+      \x3ctbody id="c_body">\x3c/tbody>\x3c/table>\x3c/div>
+    \x3c/div>
   \x3c/div>
-  \x3cdiv class="card card-pad">
-    \x3cdiv style="font-size:13px;font-weight:700">Merge duplicates\x3c/div>
-    \x3cdiv class="form-grid" style="grid-template-columns:1fr 1fr auto;align-items:end;margin-top:8px">\x3cdiv class="field">\x3clabel>Keep (primary)\x3c/label>\x3cselect id="m_primary">\x3coption value="">Select\x3c/option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} ${c.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>\x3cdiv class="field">\x3clabel>Duplicate (archive)\x3c/label>\x3cselect id="m_dup">\x3coption value="">Select\x3c/option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} ${c.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>\x3cbutton class="btn btn-danger btn-sm" id="m_go">Merge\x3c/button>\x3c/div>
+  \x3cdiv>
+    \x3cdiv class="section-eyebrow">Merge duplicates\x3c/div>
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3ch3>Merge duplicates\x3c/h3>\x3c/div>
+    \x3cdiv class="card-pad">
+      \x3cdiv class="form-grid" style="grid-template-columns:1fr 1fr auto;align-items:end">\x3cdiv class="field">\x3clabel>Keep (primary)\x3c/label>\x3cselect id="m_primary">\x3coption value="">Select\x3c/option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} ${c.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>\x3cdiv class="field">\x3clabel>Duplicate (archive)\x3c/label>\x3cselect id="m_dup">\x3coption value="">Select\x3c/option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} ${c.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>\x3cbutton class="btn btn-danger btn-sm" id="m_go">Merge\x3c/button>\x3c/div>
+      \x3c/div>
+    \x3c/div>
   \x3c/div>`;
 }
 function bindCustomers(){
@@ -571,8 +611,9 @@ function viewCustomerDetail(id){
   \x3cdiv class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
     \x3cdiv class="card kpi">\x3clabel>Points balance\x3c/label>\x3cstrong style="color:var(--primary)">${bal}\x3c/strong>\x3csmall>${ledger.length} ledger entries\x3c/small>\x3c/div>
     \x3cdiv class="card kpi">\x3clabel>Lifetime\x3c/label>\x3cstrong>${money(lifetime)}\x3c/strong>\x3csmall>${completed.length} posted\x3c/small>\x3c/div>
-    \x3cdiv class="card kpi">\x3clabel>Documents\x3c/label>\x3cstrong>${purchases.length}\x3c/strong>\x3csmall>${purchases.filter(p=>p.status==='cancelled').length} cancelled\x3c/small>\x3c/div>
+     \x3cdiv class="card kpi">\x3clabel>Receipts\x3c/label>\x3cstrong>${purchases.length}\x3c/strong>\x3csmall>${purchases.filter(p=>p.status==='cancelled').length} cancelled\x3c/small>\x3c/div>
   \x3c/div>
+  \x3cdiv class="section-eyebrow">Adjust points\x3c/div>
   \x3cdiv class="card">
     \x3cdiv class="card-head">\x3ch3>Adjust points\x3c/h3>\x3c/div>
     \x3cdiv class="card-pad">
@@ -580,13 +621,18 @@ function viewCustomerDetail(id){
       \x3cdiv id="pa_msg" style="margin-top:8px">\x3c/div>
     \x3c/div>
   \x3c/div>
-  \x3cdiv style="display:grid;grid-template-columns:1.2fr .8fr;gap:12px">
-    \x3cdiv class="card">
-      \x3cdiv class="card-head">\x3ch3>Postings (${purchases.length})\x3c/h3>\x3c/div>
-      \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Document\x3c/th>\x3cth>Date\x3c/th>\x3cth style="text-align:right">Amount\x3c/th>\x3cth>Points\x3c/th>\x3cth>Status\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${purchases.slice(0,20).map(p=> `\x3ctr>\x3ctd class="mono" style="font-size:12px">\x3ca href="#purchase/${p.id}">${p.receipt_number}\x3c/a>\x3c/td>\x3ctd>${dt(p.purchase_at)}\x3c/td>\x3ctd style="text-align:right" class="mono">${money(p.total_amount)}\x3c/td>\x3ctd>+${p.points_earned}/-${p.points_used}\x3c/td>\x3ctd>\x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}\x3c/span>\x3c/td>\x3c/tr>`).join('') || '\x3ctr>\x3ctd colspan=5 class="empty">No postings\x3c/td>\x3c/tr>'}\x3c/tbody>\x3c/table>\x3c/div>
+  \x3cdiv style="display:grid;grid-template-columns:1.2fr .8fr;gap:20px">
+    \x3cdiv>
+      \x3cdiv class="section-eyebrow">Receipts\x3c/div>
+      \x3cdiv class="card">
+       \x3cdiv class="card-head">\x3ch3>Receipts (${purchases.length})\x3c/h3>\x3c/div>
+      \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Document\x3c/th>\x3cth>Date\x3c/th>\x3cth style="text-align:right">Amount\x3c/th>\x3cth>Points\x3c/th>\x3cth>Status\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${purchases.slice(0,20).map(p=> `\x3ctr>\x3ctd class="mono" style="font-size:12px">\x3ca href="#purchase/${p.id}">${p.receipt_number}\x3c/a>\x3c/td>\x3ctd>${dt(p.purchase_at)}\x3c/td>\x3ctd style="text-align:right" class="mono">${money(p.total_amount)}\x3c/td>\x3ctd>+${p.points_earned}/-${p.points_used}\x3c/td>\x3ctd>\x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}\x3c/span>\x3c/td>\x3c/tr>`).join('') || '\x3ctr>\x3ctd colspan=5 class="empty">No postings\x3c/td>\x3c/tr>'}\x3c/tbody>\x3c/table>      \x3c/div>
+      \x3c/div>
     \x3c/div>
-    \x3cdiv class="card">
-      \x3cdiv class="card-head">\x3ch3>Ledger\x3c/h3>\x3c/div>
+    \x3cdiv>
+      \x3cdiv class="section-eyebrow">Points history\x3c/div>
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3ch3>Points history\x3c/h3>\x3c/div>
       \x3cdiv class="card-pad stack" style="max-height:420px;overflow:auto">
         ${ledger.length ? ledger.map(l=> `\x3cdiv style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">\x3cdiv>\x3cdiv style="font-size:13px;font-weight:600">${l.entry_type} \x3cspan style="color:${Number(l.points_delta)>0?'var(--ok)':'var(--danger)'}">${Number(l.points_delta)>0?'+':''}${l.points_delta}\x3c/span>\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${l.reason||''}\x3c/div>\x3c/div>\x3cdiv style="font-size:11px;color:var(--muted)">${dt(l.created_at)}\x3c/div>\x3c/div>`).join('') : '\x3cdiv class="empty">No entries\x3c/div>'}
       \x3c/div>
@@ -608,21 +654,26 @@ async function adjustPoints(customerId){
 function viewServices(){
   return `
   \x3cdiv class="page-header">
-    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Master Data › Catalog\x3c/div>\x3ch1>Catalog\x3c/h1>\x3cp>Category = Game · Service = top-up product · price is snapshot per receipt\x3c/p>\x3c/div>\x3c/div>
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Master data › Catalog\x3c/div>\x3ch1>Catalog\x3c/h1>\x3cp>Categories and prices used for new receipts.\x3c/p>\x3c/div>\x3c/div>
   \x3c/div>
-  \x3cdiv style="display:grid;grid-template-columns:.9fr 1.1fr;gap:12px;align-items:start">
-    \x3cdiv class="card">
-      \x3cdiv class="card-head">\x3cdiv>\x3ch3>Categories\x3c/h3>\x3cp>${STATE.categories.filter(c=>!c.archived_at).length} active\x3c/p>\x3c/div>\x3c/div>
+  \x3cdiv style="display:grid;grid-template-columns:.9fr 1.1fr;gap:20px;align-items:start">
+    \x3cdiv>
+      \x3cdiv class="section-eyebrow">Categories\x3c/div>
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3cdiv>\x3ch3>Categories\x3c/h3>\x3cp>${STATE.categories.filter(c=>!c.archived_at).length} active\x3c/p>\x3c/div>\x3c/div>
       \x3cdiv class="card-pad stack">
         \x3cdiv class="form-grid" style="grid-template-columns:1fr auto">\x3cdiv class="field">\x3cinput id="cat_name" placeholder="New category">\x3c/div>\x3cbutton class="btn btn-primary btn-sm" id="cat_add">Add\x3c/button>\x3c/div>
         \x3cdiv id="cat_list" class="stack" style="gap:6px;margin-top:8px">
           ${STATE.categories.filter(c=>!c.archived_at).map(c=> `\x3cdiv style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:8px">\x3cspan style="font-weight:600;font-size:13px">${c.name}\x3c/span>\x3cspan class="row">\x3cbutton class="btn btn-ghost btn-sm" data-cat-edit="${c.id}">Edit\x3c/button>\x3cbutton class="btn btn-ghost btn-sm" data-cat-arch="${c.id}" style="color:var(--danger)">Archive\x3c/button>\x3c/span>\x3c/div>`).join('') || '\x3cdiv class="empty">No categories\x3c/div>'}
         \x3c/div>
       \x3c/div>
+      \x3c/div>
     \x3c/div>
-    \x3cdiv class="card">
-      \x3cdiv class="card-head">\x3cdiv>\x3ch3>Services\x3c/h3>\x3cp>${STATE.services.filter(s=>!s.archived_at).length} active\x3c/p>\x3c/div>\x3c/div>
-      \x3cdiv class="card-pad">
+    \x3cdiv>
+      \x3cdiv class="section-eyebrow">Services\x3c/div>
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3cdiv>\x3ch3>Services\x3c/h3>\x3cp>${STATE.services.filter(s=>!s.archived_at).length} active\x3c/p>\x3c/div>\x3c/div>
+        \x3cdiv class="card-pad">
         \x3cdiv class="form-grid" style="grid-template-columns:1fr 1fr">\x3cdiv class="field">\x3clabel>Category\x3c/label>\x3cselect id="svc_cat">\x3coption value="">Select\x3c/option>${STATE.categories.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>\x3cdiv class="field">\x3clabel>Name\x3c/label>\x3cinput id="svc_name" placeholder="e.g. 100 Gems">\x3c/div>\x3c/div>
         \x3cdiv class="form-grid" style="grid-template-columns:1fr 2fr;margin-top:8px">\x3cdiv class="field">\x3clabel>Price\x3c/label>\x3cinput id="svc_price" type="number" step="0.01" placeholder="0.00">\x3c/div>\x3cdiv class="field">\x3clabel>Description\x3c/label>\x3cinput id="svc_desc" placeholder="Short description">\x3c/div>\x3c/div>
         \x3cbutton class="btn btn-primary btn-sm" id="svc_add" style="margin-top:10px">Add service\x3c/button>
@@ -658,10 +709,12 @@ function viewPurchase(id){
   \x3cdiv class="page-header">
     \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">\x3ca href="#history">Ledger\x3c/a> › ${p.receipt_number}\x3c/div>\x3ch1 class="mono" style="font-size:18px">${p.receipt_number} \x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}" style="margin-left:8px">\x3cspan class="pill-dot">\x3c/span>${p.status==='completed'?'Posted':'Cancelled'}\x3c/span>\x3c/h1>\x3cp>${dt(p.purchase_at)} · by ${p.created_by||'—'}\x3c/p>\x3c/div>\x3cdiv class="row">\x3ca class="btn btn-sec btn-sm" href="#receipt/${p.id}">Receipt\x3c/a>${p.status==='completed'?'\x3cbutton class="btn btn-sec btn-sm" id="btnEdit">Edit\x3c/button>\x3cbutton class="btn btn-danger btn-sm" id="btnCancel">Cancel\x3c/button>':''}\x3c/div>\x3c/div>
   \x3c/div>
-  \x3cdiv style="display:grid;grid-template-columns:1.1fr .9fr;gap:12px">
-    \x3cdiv class="stack">
-      \x3cdiv class="card">
-        \x3cdiv class="card-head">\x3ch3>Document\x3c/h3>\x3c/div>
+  \x3cdiv style="display:grid;grid-template-columns:1.1fr .9fr;gap:20px">
+    \x3cdiv class="stack" style="gap:20px">
+      \x3cdiv>
+        \x3cdiv class="section-eyebrow">Receipt overview\x3c/div>
+        \x3cdiv class="card">
+          \x3cdiv class="card-head">\x3ch3>Receipt\x3c/h3>\x3c/div>
         \x3cdiv class="card-pad">
           \x3cdiv style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
             \x3cdiv>\x3cdiv style="font-size:11px;color:var(--muted)">Customer\x3c/div>\x3cdiv style="font-weight:600">${c?c.name:'—'} \x3csmall class="muted">· ${c?c.customer_code:''}\x3c/small>\x3c/div>\x3c/div>
@@ -672,13 +725,18 @@ function viewPurchase(id){
           \x3c/div>
           ${p.note ? `\x3cdiv style="margin-top:12px;padding:10px;background:var(--warn-soft);border-radius:8px;font-size:13px">\x3cb>Note:\x3c/b> ${p.note}\x3c/div>` : ''}
         \x3c/div>
+        \x3c/div>
       \x3c/div>
-      \x3cdiv class="card">
-        \x3cdiv class="card-head">\x3ch3>Lines (${items.length})\x3c/h3>\x3c/div>
+      \x3cdiv>
+        \x3cdiv class="section-eyebrow">Line items\x3c/div>
+        \x3cdiv class="card">
+          \x3cdiv class="card-head">\x3ch3>Lines (${items.length})\x3c/h3>\x3c/div>
         \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Service\x3c/th>\x3cth>Qty\x3c/th>\x3cth style="text-align:right">Price\x3c/th>\x3cth style="text-align:right">Total\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${items.map(it=> `\x3ctr>\x3ctd>\x3cdiv style="font-weight:600">${it.service_name}\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${it.category_name}\x3c/div>\x3c/td>\x3ctd>${it.quantity}\x3c/td>\x3ctd style="text-align:right" class="mono">${money(it.unit_price)}\x3c/td>\x3ctd style="text-align:right;font-weight:700" class="mono">${money(it.line_total)}\x3c/td>\x3c/tr>`).join('')}\x3c/tbody>\x3c/table>\x3c/div>
+        \x3c/div>
+        \x3c/div>
       \x3c/div>
     \x3c/div>
-    \x3cdiv class="stack">
+    \x3cdiv class="stack" style="gap:20px">
       \x3cdiv class="card" id="editBox" style="display:none">
          \x3cdiv class="card-head">\x3ch3>Edit receipt\x3c/h3>\x3cbutton class="btn btn-ghost btn-sm" id="e_cancel">Close\x3c/button>\x3c/div>
         \x3cdiv class="card-pad stack">
@@ -691,8 +749,10 @@ function viewPurchase(id){
           \x3cdiv id="e_msg">\x3c/div>
         \x3c/div>
       \x3c/div>
-      \x3cdiv class="card">
-        \x3cdiv class="card-head">\x3ch3>Payment evidence\x3c/h3>\x3c/div>
+      \x3cdiv>
+        \x3cdiv class="section-eyebrow">Payment evidence\x3c/div>
+        \x3cdiv class="card">
+          \x3cdiv class="card-head">\x3ch3>Payment evidence\x3c/h3>\x3c/div>
         \x3cdiv class="card-pad">
           ${ev ? `\x3cdiv style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;background:var(--surface-2);border-radius:8px">\x3ca target="_blank" href="https://drive.google.com/file/d/${ev.file_id}/view" style="font-weight:600">${ev.original_filename}\x3c/a>\x3cbutton class="btn btn-ghost btn-sm" id="evRemove" style="color:var(--danger)">Remove\x3c/button>\x3c/div>` : '\x3cdiv class="empty" style="padding:16px">No evidence attached\x3c/div>'}
           \x3cdiv style="margin-top:10px" class="field">\x3cinput type="file" id="evFile" accept="image/jpeg,image/jpg,image/png">\x3c/div>
@@ -793,20 +853,26 @@ function viewAudit(){
 function viewSettings(){
   return `
   \x3cdiv class="page-header">
-    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Governance › Settings\x3c/div>\x3ch1>Settings\x3c/h1>\x3cp>Store identity drives receipt numbering · changes are audited\x3c/p>\x3c/div>\x3c/div>
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Control › Settings\x3c/div>\x3ch1>Settings\x3c/h1>\x3cp>Store identity and receipt defaults.\x3c/p>\x3c/div>\x3c/div>
   \x3c/div>
-  \x3cdiv style="display:grid;grid-template-columns:1.1fr .9fr;gap:12px">
-    \x3cdiv class="card">
-      \x3cdiv class="card-head">\x3ch3>Store\x3c/h3>\x3c/div>
+  \x3cdiv style="display:grid;grid-template-columns:1.1fr .9fr;gap:20px">
+    \x3cdiv>
+      \x3cdiv class="section-eyebrow">Store identity\x3c/div>
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3ch3>Store\x3c/h3>\x3c/div>
       \x3cdiv class="card-pad stack">
         \x3cdiv class="field">\x3clabel>Store name (prefix for ${STATE.store_name}-YYYY-000001)\x3c/label>\x3cinput id="s_name" value="${STATE.store_name}">\x3cdiv class="field-hint">Renaming does not affect past documents — they keep old prefix\x3c/div>\x3c/div>
         \x3cdiv class="field">\x3clabel>Receipt footer (Thai)\x3c/label>\x3cinput id="s_footer" value="${STATE.receipt_footer}">\x3c/div>
         \x3cdiv class="field">\x3clabel>Logo (PNG/JPG)\x3c/label>\x3cinput type="file" id="s_logo" accept="image/*">\x3c/div>
         \x3cbutton class="btn btn-primary" id="s_save">Save settings\x3c/button>\x3cspan id="s_msg" class="muted" style="margin-left:8px">\x3c/span>
+        \x3c/div>
       \x3c/div>
     \x3c/div>
-    \x3cdiv class="card card-pad">
-      \x3cdiv style="font-size:13px;font-weight:700">Access\x3c/div>
+    \x3cdiv>
+      \x3cdiv class="section-eyebrow">Access control\x3c/div>
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3ch3>Access\x3c/h3>\x3c/div>
+      \x3cdiv class="card-pad">
       \x3cdiv style="font-size:13px;line-height:1.6;color:var(--muted);margin-top:6px">
         Allowlist lives in \x3cb>_config\x3c/b> sheet — row \x3cb>admin_allowlist\x3c/b> then emails in column A. Non-listed users see \x3cb>Access denied\x3c/b> even with link.
       \x3c/div>

@@ -120,7 +120,22 @@
     .sidebar{position:fixed;inset:48px 0 0 0;transform:translateX(-100%);transition:.2s;z-index:20}
     .sidebar.open{transform:none}
     .shellbar-search{display:none}
-    .content{padding:14px}
+    .menu-toggle{display:grid}
+    .shellbar-brand{min-width:0}
+    .shellbar-user>div:last-child{display:none}
+    .page-header-top{flex-direction:column}
+    .page-header{margin:-14px -14px 14px;padding:14px}
+    #app > div[style*="grid-template-columns"]{grid-template-columns:1fr !important}
+    #app .card-pad[style*="grid-template-columns"],#app .form-grid[style*="grid-template-columns"]{grid-template-columns:1fr !important}
+    #app .kpi-grid{grid-template-columns:1fr 1fr !important}
+    #lines > div,#e_lines > div{grid-template-columns:1fr 1fr !important}
+    #lines > div select,#e_lines > div select{grid-column:1 / -1}
+    #lines > div span,#e_lines > div span{text-align:left !important}
+    #app .card[style*="position:sticky"]{position:static !important}
+    #app .table-wrap table{min-width:600px}
+    .dashboard-grid{grid-template-columns:1fr}
+    .content{padding:14px 14px 50px}
+    .statusbar{left:0;padding:0 14px}
     .kpi-grid{grid-template-columns:1fr 1fr}
   }
 </style>
@@ -170,6 +185,19 @@
     <div class="content" id="app">กำลังโหลด…</div>
   </main>
 </div>
+<footer class="statusbar" aria-label="System status">
+  <div class="statusbar-left">
+    <div class="shellbar-user">
+      <div class="shellbar-avatar" id="actorAvatar">—</div>
+      <div style="line-height:1"><strong id="actorName" style="font-size:12px">—</strong> <span id="actorEmail" style="font-size:11px;color:#b7c0c5">—</span></div>
+    </div>
+  </div>
+  <div class="statusbar-right">
+    <span class="status-label">Local time · Asia/Bangkok</span>
+    <span class="status-separator" aria-hidden="true">|</span>
+    <time id="clock" aria-live="polite">--:--:--</time>
+  </div>
+</footer>
 
 <script>
 let STATE={customers:[], categories:[], services:[], purchases:[], items:[], ledger:[], evidence:[], audit:[], balances:{}, store_name:'STORE', receipt_footer:''};

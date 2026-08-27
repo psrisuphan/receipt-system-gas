@@ -353,17 +353,20 @@ function viewDashboard(){
 function bindDashboard(){
   const completed=STATE.purchases.filter(p=>p.status==='completed');
   const byMonth={}; completed.forEach(p=>{ const k=localDateTime(p.purchase_at).slice(0,7); byMonth[k]=(byMonth[k]||0)+Number(p.total_amount||0); });
-  const months=Object.keys(byMonth).sort().slice(-6);
-  const values=months.map(m=>byMonth[m]);
+  const pairs=Object.entries(byMonth).sort((a,b)=>a[1]-b[1]).slice(-6);
+  const months=pairs.map(p=>p[0]);
+  const values=pairs.map(p=>p[1]);
+  const palette=['#e8c9a8','#c78956','#99621a','#287a57','#267565','#64748b'];
+  const barColors=values.map((_,i)=> palette[i % palette.length]);
   const canvas=document.getElementById('salesChart');
   if(canvas){
     if(typeof Chart !== 'undefined' && months.length){
       new Chart(canvas, {
         type:'bar',
          data:{ labels: months, datasets:[
-           { label:'Posted sales', data: values, backgroundColor:'#267565', borderRadius:2, barPercentage:0.45 }
+           { label:'Posted sales', data: values, backgroundColor:barColors, borderRadius:2, barPercentage:0.6 }
          ]},
-         options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, grid:{color:'#edf0f3'} }, x:{ grid:{display:false} } } }
+         options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ x:{ beginAtZero:true, grid:{color:'#edf0f3'} }, y:{ grid:{display:false} } } }
       });
     } else if(!months.length) {
       canvas.outerHTML = '\x3cdiv class="chart-empty">No posted sales yet.\x3c/div>';

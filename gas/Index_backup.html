@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title><?= storeName ?></title>
+<style>
+  :root{ --bg:#f1f2f5; --surface:#fff; --text:#1b1c22; --muted:#656975; --border:#dfe1e7; --primary:#514b9d; --primary-hover:#403b82; --ok:#267052; --danger:#a63a3a; }
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,'Bai Jamjuree',sans-serif;background:var(--bg);color:var(--text)}
+  a{color:var(--primary);text-decoration:none} button{cursor:pointer}
+  .shell{display:flex;min-height:100vh}
+  .rail{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:20px;position:fixed;top:0;bottom:0;overflow:auto}
+  .rail h1{font-size:18px;margin:0 0 16px} .rail nav a{display:block;padding:10px 12px;border-radius:8px;margin:4px 0;color:var(--text)} .rail nav a.active{background:#efeff8;color:var(--primary);font-weight:600}
+  .main{margin-left:220px;flex:1;padding:24px;max-width:1100px;width:100%}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
+  .row{display:flex;gap:12px;flex-wrap:wrap} .row>*{flex:1;min-width:180px}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;font:inherit}
+  label{font-size:13px;display:block;margin:8px 0 4px;color:var(--muted)}
+  .btn{padding:10px 14px;border-radius:8px;border:1px solid transparent;font-weight:600}
+  .btn-primary{background:var(--primary);color:#fff} .btn-primary:hover{background:var(--primary-hover)}
+  .btn-sec{background:#fff;border-color:var(--border)} .btn-danger{background:var(--danger);color:#fff}
+  .muted{color:var(--muted)} .error{color:var(--danger);background:#fef2f2;border:1px solid #fecaca;padding:10px;border-radius:8px}
+  .success{color:var(--ok);background:#f0fdf4;border:1px solid #bbf7d0;padding:10px;border-radius:8px}
+  table{width:100%;border-collapse:collapse} th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
+  th{color:var(--muted);font-weight:600;background:#f7f7fa}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid var(--border)}
+  .pill-ok{background:#ecfdf5;color:var(--ok)} .pill-cancel{background:#fef2f2;color:var(--danger)}
+  /* receipt */
+  .receipt{max-width:380px;margin:16px auto;background:#fff;padding:20px;border:1px solid #ddd}
+  .receipt h2{text-align:center;margin:0} .rule{border-top:1px dashed #bbb;margin:12px 0}
+  .totals dt{color:var(--muted)} .totals dd{font-weight:600;text-align:right}
+  .hidden{display:none}
+  @media(max-width:720px){ .rail{position:fixed;transform:translateX(-100%);transition:.2s;z-index:10} .rail.open{transform:none} .main{margin-left:0} .menu-btn{display:block !important}}
+  .menu-btn{display:none;position:fixed;top:10px;left:10px;z-index:11}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+  .kpi{padding:16px;border-radius:14px;background:#fff;border:1px solid var(--border)} .kpi strong{font-size:22px;display:block}
+</style>
+</head>
+<body>
+<button class="menu-btn btn btn-sec" onclick="document.querySelector('.rail').classList.toggle('open')">☰</button>
+<div class="shell">
+  <aside class="rail">
+    <h1><?= storeName ?></h1>
+    <nav id="nav">
+      <a href="#dashboard" data-route="dashboard">Dashboard</a>
+      <a href="#new" data-route="new">สร้างใบเสร็จ</a>
+      <a href="#history" data-route="history">ประวัติใบเสร็จ</a>
+      <a href="#customers" data-route="customers">ลูกค้า</a>
+      <a href="#services" data-route="services">บริการ / หมวดหมู่</a>
+      <a href="#audit" data-route="audit">Audit Logs</a>
+      <a href="#settings" data-route="settings">ตั้งค่า</a>
+    </nav>
+    <div style="margin-top:20px;font-size:12px" class="muted" id="actor"></div>
+  </aside>
+  <main class="main">
+    <div id="app">กำลังโหลด…</div>
+  </main>
+</div>
+
+<script>
+// tiny router
+let STATE={customers:[], categories:[], services:[], purchases:[], items:[], ledger:[], evidence:[], audit:[], balances:{}, store_name:'STORE', receipt_footer:''};
+let FILTER={q:'', status:'', customer:''};
+
+function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstElementChild; }
+function money(n){ return new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB'}).format(Number(n||0)); }
+function dt(iso){ try{ return new Date(iso).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'});}catch(e){return iso} }
+function call(name, ...args){
+  return new Promise((res,rej)=>{
+    google.script.run.withSuccessHandler(res).withFailureHandler(e=>rej(e.message||String(e)))[name](...args);
+  });
+}
+async function refresh(){
+  STATE = await call('apiGetInit');
+  document.getElementById('actor').textContent = STATE.actor.email;
+  render();
+}
+function navActive(){
+  const h=location.hash.replace('#','')||'dashboard';
+  document.querySelectorAll('#nav a').forEach(a=> a.classList.toggle('active', a.dataset.route===h));
+}
+window.addEventListener('hashchange', ()=>{ navActive(); render(); });
+function render(){
+  navActive();
+  const r=(location.hash.replace('#','')||'dashboard');
+  const app=document.getElementById('app');
+  try{
+    if(r==='dashboard') app.innerHTML=viewDashboard();
+    else if(r==='new') app.innerHTML=viewNew();
+    else if(r==='history') app.innerHTML=viewHistory();
+    else if(r==='customers') app.innerHTML=viewCustomers();
+    else if(r.startsWith('customer/')) app.innerHTML=viewCustomerDetail(r.split('/')[1]);
+    else if(r==='services') app.innerHTML=viewServices();
+    else if(r.startsWith('purchase/')) app.innerHTML=viewPurchase(r.split('/')[1]);
+    else if(r.startsWith('receipt/')) app.innerHTML=viewReceipt(r.split('/')[1]);
+    else if(r==='audit') app.innerHTML=viewAudit();
+    else if(r==='settings') app.innerHTML=viewSettings();
+    else app.innerHTML='<div class="card">Not found</div>';
+    afterRender(r);
+  }catch(e){ app.innerHTML='<div class="error">'+e+'</div>'; }
+}
+function afterRender(route){
+  if(route==='new') bindNew();
+  if(route==='customers') bindCustomers();
+  if(route==='services') bindServices();
+  if(route==='settings') bindSettings();
+}
+
+// --- views ---
+function viewDashboard(){
+  const completed=STATE.purchases.filter(p=>p.status==='completed');
+  const cancelled=STATE.purchases.filter(p=>p.status==='cancelled');
+  const total=completed.reduce((s,p)=>s+Number(p.total_amount||0),0);
+  const pointsIssued=STATE.ledger.filter(l=>Number(l.points_delta)>0).reduce((s,l)=>s+Number(l.points_delta),0);
+  const pointsRedeemed=Math.abs(STATE.ledger.filter(l=>Number(l.points_delta)<0).reduce((s,l)=>s+Number(l.points_delta),0));
+  // monthly chart simple
+  const byMonth={}; completed.forEach(p=>{ const k=new Date(p.purchase_at).toISOString().slice(0,7); byMonth[k]=(byMonth[k]||0)+Number(p.total_amount||0); });
+  const months=Object.keys(byMonth).sort().slice(-6);
+  const max=Math.max(1,...months.map(m=>byMonth[m]));
+  return `
+  <h1>Dashboard</h1>
+  <div class="kpis">
+    <div class="kpi"><span class="muted">ยอดขายรวม</span><strong>${money(total)}</strong></div>
+    <div class="kpi"><span class="muted">สำเร็จ</span><strong>${completed.length}</strong></div>
+    <div class="kpi"><span class="muted">ยกเลิก</span><strong>${cancelled.length}</strong></div>
+    <div class="kpi"><span class="muted">ลูกค้า</span><strong>${STATE.customers.filter(c=>!c.archived_at).length}</strong></div>
+    <div class="kpi"><span class="muted">แต้มแจก / ใช้</span><strong>${pointsIssued} / ${pointsRedeemed}</strong></div>
+  </div>
+  <div class="card">
+    <h3>ยอดขาย 6 เดือนล่าสุด</h3>
+    <div style="display:flex;align-items:end;gap:8px;height:120px">
+      ${months.map(m=> `<div style="flex:1;text-align:center"><div style="background:var(--primary);height:${Math.round(byMonth[m]/max*100)}px;border-radius:6px"></div><small>${m}</small><br><small>${money(byMonth[m])}</small></div>`).join('') || '<span class="muted">ยังไม่มีข้อมูล</span>'}
+    </div>
+  </div>
+  <div class="card">
+    <h3>รายการล่าสุด</h3>
+    <table><thead><tr><th>ใบเสร็จ</th><th>ลูกค้า</th><th>ยอดสุทธิ</th><th>สถานะ</th></tr></thead>
+    <tbody>${STATE.purchases.slice(0,8).map(p=>{
+      const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id)); return `<tr><td><a href="#receipt/${p.id}">${p.receipt_number}</a></td><td>${c?c.name:'—'}</td><td>${money(p.total_amount)}</td><td><span class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}</span></td></tr>`;
+    }).join('')}</tbody></table>
+  </div>`;
+}
+
+function viewNew(){
+  const custOpts=STATE.customers.filter(c=>!c.archived_at).map(c=> `<option value="${c.id}">${c.customer_code} · ${c.name} (${STATE.balances[c.id]||0} แต้ม)</option>`).join('');
+  const svcOpts=STATE.services.filter(s=>!s.archived_at).map(s=>{
+    const cat=STATE.categories.find(x=>String(x.id)===String(s.category_id)); return `<option value="${s.id}">${cat?cat.name:''} · ${s.name} (${money(s.default_price)})</option>`;
+  }).join('');
+  return `
+  <h1>สร้างใบเสร็จ</h1>
+  <div id="newMsg"></div>
+  <div class="card">
+    <label>ลูกค้า</label><select id="n_customer"><option value="">เลือกลูกค้า</option>${custOpts}</select>
+    <div id="custInfo" class="muted" style="margin:6px 0"></div>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="n_useNow" checked style="width:auto"> ใช้วันเวลาปัจจุบัน (Asia/Bangkok)</label>
+    <label>วันเวลาซื้อ</label><input type="datetime-local" id="n_at" disabled>
+    <label>หมายเหตุ</label><textarea id="n_note" rows="2"></textarea>
+    <label>หลักฐานโอน (JPG/PNG, ≤10MB)</label><input type="file" id="n_file" accept="image/jpeg,image/jpg,image/png">
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h3>รายการบริการ</h3><button class="btn btn-sec" id="addLine">+ เพิ่มรายการ</button></div>
+    <div id="lines"></div>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="n_redeem" style="width:auto"> ใช้ 8 แต้มลด 8%</label>
+    <div id="totals" style="margin:12px 0;font-weight:600"></div>
+    <button class="btn btn-primary" id="savePurchase">บันทึกใบเสร็จ</button>
+    <datalist id="svcList">${svcOpts}</datalist>
+  </div>
+  <div id="svcStore" class="hidden">${svcOpts}</div>
+  `;
+}
+function bindNew(){
+  const linesEl=document.getElementById('lines');
+  const svcMap={}; STATE.services.forEach(s=> svcMap[s.id]=s);
+  const catMap={}; STATE.categories.forEach(c=> catMap[c.id]=c);
+  let lines=[{service_id:'', quantity:1, unit_price:0}];
+  function renderLines(){
+    linesEl.innerHTML=lines.map((l,i)=> `
+      <div style="display:flex;gap:8px;margin:8px 0;align-items:center">
+        <select data-i="${i}" class="svc" style="flex:2"><option value="">เลือกบริการ</option>${STATE.services.filter(s=>!s.archived_at).map(s=> `<option value="${s.id}" ${s.id===l.service_id?'selected':''}>${(catMap[s.category_id]?.name||'')+' · '+s.name}</option>`).join('')}</select>
+        <input type="number" min="1" step="1" value="${l.quantity}" data-i="${i}" class="qty" style="width:90px" placeholder="จำนวน">
+        <input type="number" min="0" step="0.01" value="${l.unit_price}" data-i="${i}" class="price" style="width:120px" placeholder="ราคา">
+        <span style="width:110px;text-align:right">${money(Number(l.quantity||0)*Number(l.unit_price||0))}</span>
+        <button class="btn btn-sec" data-del="${i}">ลบ</button>
+      </div>
+    `).join('');
+    calc();
+  }
+  function calc(){
+    const redeem=(document.getElementById('n_redeem') && document.getElementById('n_redeem').checked);
+    let sub=lines.reduce((s,l)=> s+Number(l.quantity||0)*Number(l.unit_price||0),0); sub=Math.round(sub*100)/100;
+    const disc=redeem? Math.round(sub*0.08*100)/100:0; const total=Math.round((sub-disc)*100)/100;
+    let pts=0; if(total<200) pts=0; else if(total<500) pts=2; else if(total<800) pts=4; else if(total<1000) pts=6; else pts=8;
+    document.getElementById('totals').innerHTML=`ยอดรวม ${money(sub)} ${redeem ? '· ส่วนลด -'+money(disc) : ''} · <b>ยอดสุทธิ ${money(total)}</b> · แต้มที่จะได้ ${pts}`;
+  }
+  linesEl.addEventListener('change', e=>{
+    const i=Number(e.target.dataset.i); if(isNaN(i)) return;
+    if(e.target.classList.contains('svc')){ lines[i].service_id=e.target.value; const svc=svcMap[e.target.value]; if(svc) lines[i].unit_price=Number(svc.default_price); renderLines(); }
+    if(e.target.classList.contains('qty')) lines[i].quantity=e.target.value;
+    if(e.target.classList.contains('price')) lines[i].unit_price=e.target.value;
+    calc();
+  });
+  linesEl.addEventListener('input', e=>{ const i=Number(e.target.dataset.i); if(isNaN(i)) return; if(e.target.classList.contains('qty')) lines[i].quantity=e.target.value; if(e.target.classList.contains('price')) lines[i].unit_price=e.target.value; calc(); });
+  linesEl.addEventListener('click', e=>{ const d=e.target.dataset.del; if(d!=null){ lines.splice(Number(d),1); if(!lines.length) lines.push({service_id:'',quantity:1,unit_price:0}); renderLines(); } });
+  document.getElementById('addLine').onclick=()=>{ lines.push({service_id:'',quantity:1,unit_price:0}); renderLines(); };
+  document.getElementById('n_useNow').onchange=e=> document.getElementById('n_at').disabled=e.target.checked;
+  document.getElementById('n_customer').onchange=e=>{
+    const id=e.target.value; const bal=STATE.balances[id]||0;
+    document.getElementById('custInfo').textContent = id? `แต้มปัจจุบัน: ${bal} ${bal>=8?'· ใช้ 8 แต้มลด 8% ได้':''}`: '';
+    document.getElementById('n_redeem').disabled=bal<8; if(bal<8) document.getElementById('n_redeem').checked=false; calc();
+  };
+  document.getElementById('n_redeem').onchange=calc;
+  document.getElementById('savePurchase').onclick=async ()=>{
+    const btn=document.getElementById('savePurchase'); btn.disabled=true; btn.textContent='กำลังบันทึก…';
+    try{
+      const customer_id=document.getElementById('n_customer').value; if(!customer_id) throw new Error('เลือกลูกค้า');
+      const useNow=document.getElementById('n_useNow').checked;
+      const at=document.getElementById('n_at').value;
+      let purchase_at=null; if(!useNow){ if(!at) throw new Error('ระบุวันเวลาซื้อ'); purchase_at=at; } // sent as datetime-local
+      if(lines.some(l=>!l.service_id|| !Number.isInteger(Number(l.quantity))||Number(l.quantity)<=0||Number(l.unit_price)<0)) throw new Error('ตรวจสอบรายการ');
+      const payload={customer_id, purchase_at, items: lines.map(l=>({service_id:l.service_id, quantity:Number(l.quantity), unit_price:Number(l.unit_price)})), redeem_points: document.getElementById('n_redeem').checked, note: document.getElementById('n_note').value.trim()};
+      const res=await call('apiCreatePurchase', payload);
+      // upload evidence if selected
+      const file=document.getElementById('n_file').files[0];
+      if(file){
+        const b64=await toBase64(file);
+        await call('apiUploadEvidence', res.purchase_id, file.name, file.type, b64);
+      }
+      document.getElementById('newMsg').innerHTML=`<div class="success">บันทึกสำเร็จ ${res.receipt_number} · ยอดสุทธิ ${money(res.total_amount)} · <a href="#receipt/${res.purchase_id}">ดูใบเสร็จ</a></div>`;
+      await refresh();
+    }catch(e){ document.getElementById('newMsg').innerHTML=`<div class="error">${e}</div>`; }
+    btn.disabled=false; btn.textContent='บันทึกใบเสร็จ';
+  };
+  renderLines();
+}
+function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+
+function viewHistory(){
+  const qs=new URLSearchParams(location.search);
+  return `
+  <h1>ประวัติใบเสร็จ</h1>
+  <div class="card">
+    <div class="row">
+      <input id="h_q" placeholder="ค้นหาเลขที่/ชื่อ/รหัส" value="${FILTER.q}">
+      <select id="h_status"><option value="">ทุกสถานะ</option><option value="completed" ${FILTER.status==='completed'?'selected':''}>สำเร็จ</option><option value="cancelled" ${FILTER.status==='cancelled'?'selected':''}>ยกเลิก</option></select>
+      <select id="h_customer"><option value="">ลูกค้าทุกคน</option>${STATE.customers.map(c=> `<option value="${c.id}" ${FILTER.customer===c.id?'selected':''}>${c.customer_code} · ${c.name}</option>`).join('')}</select>
+      <button class="btn btn-primary" id="h_search">ค้นหา</button>
+      <button class="btn btn-sec" id="h_csv">Export CSV</button>
+    </div>
+  </div>
+  <div class="card">
+    <table><thead><tr><th>ใบเสร็จ</th><th>วันที่</th><th>ลูกค้า</th><th>ยอดสุทธิ</th><th>สถานะ</th><th></th></tr></thead>
+    <tbody>${STATE.purchases.filter(p=>{
+      if(FILTER.status && p.status!==FILTER.status) return false;
+      if(FILTER.customer && String(p.customer_id)!==String(FILTER.customer)) return false;
+      if(FILTER.q){
+        const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id)); const hay=[p.receipt_number,c?c.name:'',c?c.customer_code:'',c?c.line_id:'',c?c.x_account:''].join(' ').toLowerCase();
+        if(!hay.includes(FILTER.q.toLowerCase())) return false;
+      }
+      return true;
+    }).slice(0,100).map(p=>{
+      const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id));
+      return `<tr><td>${p.receipt_number}</td><td>${dt(p.purchase_at)}</td><td>${c?c.name:'—'}</td><td>${money(p.total_amount)}</td><td><span class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}</span></td><td><a class="btn btn-sec" href="#purchase/${p.id}">รายละเอียด</a> <a class="btn btn-sec" href="#receipt/${p.id}">ใบเสร็จ</a></td></tr>`;
+    }).join('')}</tbody></table>
+  </div>`;
+}
+function bindHistory(){}
+
+function viewCustomers(){
+  return `
+  <h1>ลูกค้า</h1>
+  <div class="card">
+    <div class="row">
+      <input id="c_name" placeholder="ชื่อลูกค้า *">
+      <input id="c_line" placeholder="LINE ID">
+      <input id="c_x" placeholder="X account">
+      <input id="c_notes" placeholder="หมายเหตุ">
+      <button class="btn btn-primary" id="c_add">เพิ่มลูกค้า</button>
+    </div>
+    <div id="c_msg"></div>
+  </div>
+  <div class="card">
+    <input id="c_search" placeholder="ค้นหาชื่อ/รหัส/LINE/X" style="margin-bottom:8px">
+    <table><thead><tr><th>รหัส</th><th>ชื่อ</th><th>LINE / X</th><th>แต้ม</th><th></th></tr></thead>
+    <tbody id="c_body"></tbody></table>
+  </div>
+  <div class="card">
+    <h3>Merge ลูกค้าซ้ำ</h3>
+    <div class="row"><select id="m_primary"><option value="">Primary</option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `<option value="${c.id}">${c.customer_code} ${c.name}</option>`).join('')}</select>
+    <select id="m_dup"><option value="">Duplicate (จะถูก archive)</option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `<option value="${c.id}">${c.customer_code} ${c.name}</option>`).join('')}</select>
+    <button class="btn btn-danger" id="m_go">Merge</button></div>
+  </div>`;
+}
+function bindCustomers(){
+  const body=document.getElementById('c_body'); const search=document.getElementById('c_search');
+  function render(){
+    const q=(search.value||'').toLowerCase();
+    const rows=STATE.customers.filter(c=>!c.archived_at).filter(c=> !q || [c.name,c.customer_code,c.line_id,c.x_account].join(' ').toLowerCase().includes(q))
+      .map(c=> `<tr><td>${c.customer_code}</td><td><a href="#customer/${c.id}">${c.name}</a></td><td>${c.line_id||''} ${c.x_account?'/ '+c.x_account:''}</td><td>${STATE.balances[c.id]||0}</td><td><button class="btn btn-sec" data-edit="${c.id}">แก้ไข</button> <button class="btn btn-sec" data-arch="${c.id}">Archive</button></td></tr>`).join('');
+    body.innerHTML=rows||'<tr><td colspan=5 class="muted">ไม่พบ</td></tr>';
+  }
+  search.oninput=render; render();
+  document.getElementById('c_add').onclick=async ()=>{
+    try{
+      const payload={name:document.getElementById('c_name').value, line_id:document.getElementById('c_line').value, x_account:document.getElementById('c_x').value, notes:document.getElementById('c_notes').value};
+      await call('apiCreateCustomer', payload); await refresh(); document.getElementById('c_msg').innerHTML='<div class="success">เพิ่มแล้ว</div>';
+    }catch(e){ document.getElementById('c_msg').innerHTML='<div class="error">'+e+'</div>'; }
+  };
+  body.onclick=async e=>{
+    if(e.target.dataset.arch){
+      if(!confirm('Archive ลูกค้านี้?')) return;
+      await call('apiArchiveCustomer', e.target.dataset.arch); await refresh();
+    }
+    if(e.target.dataset.edit){
+      const c=STATE.customers.find(x=>String(x.id)===String(e.target.dataset.edit));
+      const name=prompt('ชื่อ',c.name); if(name==null) return;
+      const line_id=prompt('LINE',c.line_id||''); const x_account=prompt('X',c.x_account||'');
+      try{ await call('apiUpdateCustomer', c.id, {name, line_id, x_account}); await refresh(); }catch(err){ alert(err); }
+    }
+  };
+  document.getElementById('m_go').onclick=async ()=>{
+    const p=document.getElementById('m_primary').value, d=document.getElementById('m_dup').value;
+    if(!p||!d) return alert('เลือกทั้งสอง');
+    if(!confirm('Merge จะย้าย purchases/points ไป primary และ archive duplicate')) return;
+    await call('apiMergeCustomers', p, d); await refresh(); alert('Merged');
+  };
+}
+function viewCustomerDetail(id){
+  const c=STATE.customers.find(x=>String(x.id)===String(id)); if(!c) return '<div class="error">Customer not found</div>';
+  const bal=STATE.balances[id]||0;
+  const purchases=STATE.purchases.filter(p=>String(p.customer_id)===String(id));
+  const ledger=STATE.ledger.filter(l=>String(l.customer_id)===String(id)).slice(0,30);
+  return `
+  <h1>${c.name} <small class="muted">${c.customer_code}</small></h1>
+  <div class="card"><b>LINE:</b> ${c.line_id||'—'} · <b>X:</b> ${c.x_account||'—'} · <b>แต้ม:</b> ${bal} · <b>หมายเหตุ:</b> ${c.notes||'—'}</div>
+  <div class="card">
+    <h3>ปรับแต้ม</h3>
+    <div class="row"><input id="pa_delta" type="number" placeholder="+/- แต้ม"><input id="pa_reason" placeholder="เหตุผล *"><button class="btn btn-primary" id="pa_go" onclick="adjustPoints('${id}')">บันทึก</button></div><div id="pa_msg"></div>
+  </div>
+  <div class="card"><h3>ประวัติซื้อ (${purchases.length})</h3><table><thead><tr><th>ใบเสร็จ</th><th>วันที่</th><th>ยอดสุทธิ</th><th>แต้ม</th><th>สถานะ</th></tr></thead><tbody>${purchases.map(p=> `<tr><td><a href="#purchase/${p.id}">${p.receipt_number}</a></td><td>${dt(p.purchase_at)}</td><td>${money(p.total_amount)}</td><td>+${p.points_earned}/-${p.points_used}</td><td>${p.status}</td></tr>`).join('')}</tbody></table></div>
+  <div class="card"><h3>Ledger</h3>${ledger.map(l=> `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>${l.entry_type} ${Number(l.points_delta)>0?'+':''}${l.points_delta} · ${l.reason||''}</span><small class="muted">${dt(l.created_at)}</small></div>`).join('')||'<span class="muted">ไม่มี</span>'}</div>
+  `;
+}
+
+async function adjustPoints(customerId){
+  const id = customerId || (location.hash.split('/')[1]||'');
+  const delta = document.getElementById('pa_delta') ? document.getElementById('pa_delta').value : '';
+  const reason = document.getElementById('pa_reason') ? document.getElementById('pa_reason').value : '';
+  const msg = document.getElementById('pa_msg');
+  try{
+    const res = await call('apiAdjustPoints', id, Number(delta), reason);
+    if(msg) msg.innerHTML='<span class="success">ปรับแล้ว คงเหลือ '+res.points_balance+'</span>';
+    await refresh(); render();
+  }catch(e){ if(msg) msg.innerHTML='<span class="error">'+e+'</span>'; else alert(e); }
+}
+function viewServices(){
+  return `
+  <h1>บริการ / หมวดหมู่</h1>
+  <div class="card">
+    <h3>หมวดหมู่ (Category)</h3>
+    <div class="row"><input id="cat_name" placeholder="ชื่อหมวดหมู่"><button class="btn btn-primary" id="cat_add">เพิ่มหมวดหมู่</button></div>
+    <div id="cat_list" style="margin-top:12px">${STATE.categories.filter(c=>!c.archived_at).map(c=> `<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid var(--border)"><span>${c.name}</span><span><button class="btn btn-sec" data-cat-edit="${c.id}">rename</button> <button class="btn btn-sec" data-cat-arch="${c.id}">archive</button></span></div>`).join('')}</div>
+  </div>
+  <div class="card">
+    <h3>บริการ</h3>
+    <div class="row"><select id="svc_cat"><option value="">เลือกหมวดหมู่</option>${STATE.categories.filter(c=>!c.archived_at).map(c=> `<option value="${c.id}">${c.name}</option>`).join('')}</select><input id="svc_name" placeholder="ชื่อบริการ"><input id="svc_price" type="number" step="0.01" placeholder="ราคา"><input id="svc_desc" placeholder="รายละเอียด"><button class="btn btn-primary" id="svc_add">เพิ่มบริการ</button></div>
+    <table style="margin-top:12px"><thead><tr><th>หมวดหมู่</th><th>บริการ</th><th>ราคา</th><th></th></tr></thead><tbody>${STATE.services.filter(s=>!s.archived_at).map(s=>{
+      const cat=STATE.categories.find(c=>String(c.id)===String(s.category_id)); return `<tr><td>${cat?cat.name:'—'}</td><td>${s.name}<br><small class="muted">${s.description||''}</small></td><td>${money(s.default_price)}</td><td><button class="btn btn-sec" data-svc-arch="${s.id}">archive</button> <button class="btn btn-sec" data-svc-edit="${s.id}">edit</button></td></tr>`;
+    }).join('')}</tbody></table>
+  </div>`;
+}
+function bindServices(){
+  document.getElementById('cat_add').onclick=async ()=>{ try{ await call('apiUpsertCategory', {name: document.getElementById('cat_name').value}); await refresh(); }catch(e){alert(e)} };
+  document.getElementById('cat_list').onclick=async e=>{
+    if(e.target.dataset.catArch){ await call('apiArchiveCategory', e.target.dataset.catArch); await refresh(); }
+    if(e.target.dataset.catEdit){ const n=prompt('ชื่อใหม่'); if(n) { await call('apiUpsertCategory', {id:e.target.dataset.catEdit, name:n}); await refresh(); } }
+  };
+  document.getElementById('svc_add').onclick=async ()=>{
+    try{ await call('apiUpsertService', {category_id: document.getElementById('svc_cat').value, name: document.getElementById('svc_name').value, default_price: document.getElementById('svc_price').value, description: document.getElementById('svc_desc').value}); await refresh(); }catch(e){alert(e)}
+  };
+  document.querySelectorAll('[data-svc-arch]').forEach(b=> b.onclick=async ()=>{ await call('apiArchiveService', b.dataset.svcArch); await refresh(); });
+  document.querySelectorAll('[data-svc-edit]').forEach(b=> b.onclick=async ()=>{
+    const s=STATE.services.find(x=>String(x.id)===String(b.dataset.svcEdit)); const n=prompt('ชื่อ',s.name); if(n==null) return; const p=prompt('ราคา',s.default_price); await call('apiUpsertService', {id:s.id, category_id:s.category_id, name:n, default_price:p||s.default_price, description:s.description}); await refresh();
+  });
+}
+
+function viewPurchase(id){
+  const p=STATE.purchases.find(x=>String(x.id)===String(id)); if(!p) return '<div class="error">Purchase not found</div>';
+  const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id));
+  const items=STATE.items.filter(x=>String(x.purchase_id)===String(id));
+  const ev=STATE.evidence.find(x=>String(x.purchase_id)===String(id));
+  return `
+  <h1>${p.receipt_number} <span class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}</span></h1>
+  <div class="card">
+    <div class="row"><div><b>ลูกค้า:</b> ${c?c.name:'—'}<br><b>วันที่ซื้อ:</b> ${dt(p.purchase_at)}<br><b>สร้างโดย:</b> ${p.created_by||'—'}</div>
+    <div><b>ยอดรวม:</b> ${money(p.subtotal)}<br><b>ส่วนลด:</b> -${money(p.discount_amount)}<br><b>ยอดสุทธิ:</b> ${money(p.total_amount)}<br><b>แต้ม:</b> ใช้ ${p.points_used} ได้ ${p.points_earned}</div></div>
+    <table style="margin-top:12px"><thead><tr><th>บริการ</th><th>จำนวน</th><th>ราคา</th><th>รวม</th></tr></thead><tbody>${items.map(it=> `<tr><td>${it.service_name}<br><small class="muted">${it.category_name}</small></td><td>${it.quantity}</td><td>${money(it.unit_price)}</td><td>${money(it.line_total)}</td></tr>`).join('')}</tbody></table>
+    ${p.note ? '<p><b>หมายเหตุ:</b> '+p.note+'</p>' : ''}
+    <div class="row" style="margin-top:12px">
+      <a class="btn btn-sec" href="#receipt/${p.id}">ดูใบเสร็จ</a>
+      ${p.status==='completed' ? '<button class="btn btn-sec" id="btnEdit">แก้ไข</button><button class="btn btn-danger" id="btnCancel">ยกเลิก</button>' : ''}
+    </div>
+    <div id="editBox" class="hidden card" style="background:#f7f7fa">
+      <h3>แก้ไข Purchase</h3>
+      <label>ลูกค้า</label><select id="e_customer">${STATE.customers.filter(x=>!x.archived_at||String(x.id)===String(p.customer_id)).map(x=> `<option value="${x.id}" ${String(x.id)===String(p.customer_id)?'selected':''}>${x.customer_code} ${x.name}</option>`).join('')}</select>
+      <label>วันเวลาซื้อ</label><input id="e_at" type="datetime-local" value="${new Date(p.purchase_at).toISOString().slice(0,16)}">
+      <label>หมายเหตุ</label><input id="e_note" value="${p.note||''}">
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="e_redeem" ${Number(p.points_used)>0 ? 'checked' : ''} style="width:auto"> ใช้ 8 แต้มลด 8%</label>
+      <div id="e_lines"></div><button class="btn btn-sec" id="e_addLine">+ รายการ</button>
+      <div style="margin-top:8px"><button class="btn btn-primary" id="e_save">บันทึกแก้ไข</button> <button class="btn btn-sec" id="e_cancel">ปิด</button></div>
+      <div id="e_msg"></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>หลักฐานโอน</h3>
+      ${ev ? '<a target="_blank" href="https://drive.google.com/file/d/'+ev.file_id+'/view">ดูไฟล์ ('+ev.original_filename+')</a> <button class="btn btn-sec" id="evRemove">ลบ</button>' : '<span class="muted">ยังไม่มี</span>'}
+      <div style="margin-top:8px"><input type="file" id="evFile" accept="image/jpeg,image/jpg,image/png"> <button class="btn btn-primary" id="evUpload">อัปโหลด/แทนที่</button></div>
+      <div id="evMsg"></div>
+    </div>
+  </div>
+  `;
+}
+function afterPurchase(id){
+  const p=STATE.purchases.find(x=>String(x.id)===String(id)); if(!p) return;
+  const _btnCancel=document.getElementById('btnCancel'); if(_btnCancel) _btnCancel.addEventListener('click', async ()=>{
+    const reason=prompt('เหตุผลยกเลิก *'); if(!reason) return;
+    if(!confirm('ยกเลิก '+p.receipt_number+' ? แต้มจะถูกย้อนกลับ')) return;
+    try{ await call('apiCancelPurchase', id, reason); await refresh(); location.hash='#purchase/'+id; }catch(e){alert(e)}
+  });
+  const box=document.getElementById('editBox');
+  const _btnEdit=document.getElementById('btnEdit'); if(_btnEdit) _btnEdit.addEventListener('click', ()=> box.classList.toggle('hidden'));
+  const _eCancel=document.getElementById('e_cancel'); if(_eCancel) _eCancel.addEventListener('click', ()=> box.classList.add('hidden'));
+  // edit lines
+  let items=STATE.items.filter(x=>String(x.purchase_id)===String(id)).map(it=> ({service_id:it.service_id, quantity:it.quantity, unit_price:it.unit_price}));
+  if(!items.length) items=[{service_id:'',quantity:1,unit_price:0}];
+  const linesEl=document.getElementById('e_lines');
+  function renderE(){
+    linesEl.innerHTML=items.map((l,i)=> `
+      <div style="display:flex;gap:8px;margin:6px 0">
+        <select data-i="${i}" class="e_svc" style="flex:2"><option value="">บริการ</option>${STATE.services.map(s=>{
+          const cat=STATE.categories.find(c=>String(c.id)===String(s.category_id)); return `<option value="${s.id}" ${s.id===l.service_id?'selected':''}>${cat?cat.name:''}·${s.name}</option>`;
+        }).join('')}</select>
+        <input type="number" data-i="${i}" class="e_qty" value="${l.quantity}" style="width:90px">
+        <input type="number" data-i="${i}" class="e_price" value="${l.unit_price}" style="width:110px">
+        <button class="btn btn-sec" data-del="${i}">ลบ</button>
+      </div>
+    `).join('');
+  }
+  if(linesEl){
+    renderE();
+    linesEl.addEventListener('change', e=>{ const i=Number(e.target.dataset.i); if(e.target.classList.contains('e_svc')){ items[i].service_id=e.target.value; const svc=STATE.services.find(s=>s.id===e.target.value); if(svc) items[i].unit_price=Number(svc.default_price); renderE(); } });
+    linesEl.addEventListener('input', e=>{ const i=Number(e.target.dataset.i); if(e.target.classList.contains('e_qty')) items[i].quantity=e.target.value; if(e.target.classList.contains('e_price')) items[i].unit_price=e.target.value; });
+    linesEl.addEventListener('click', e=>{ if(e.target.dataset.del!=null){ items.splice(Number(e.target.dataset.del),1); if(!items.length) items.push({service_id:'',quantity:1,unit_price:0}); renderE(); }});
+    document.getElementById('e_addLine').onclick=()=>{ items.push({service_id:'',quantity:1,unit_price:0}); renderE(); };
+    document.getElementById('e_save').onclick=async ()=>{
+      try{
+        const payload={customer_id: document.getElementById('e_customer').value, purchase_at: document.getElementById('e_at').value, note: document.getElementById('e_note').value, redeem_points: document.getElementById('e_redeem').checked, items: items.map(l=>({service_id:l.service_id, quantity:Number(l.quantity), unit_price:Number(l.unit_price)})) };
+        await call('apiEditPurchase', id, payload); await refresh(); location.hash='#purchase/'+id; alert('แก้ไขแล้ว');
+      }catch(e){ document.getElementById('e_msg').innerHTML='<div class="error">'+e+'</div>'; }
+    };
+    document.getElementById('evUpload').onclick=async ()=>{
+      const f=document.getElementById('evFile').files[0]; if(!f) return alert('เลือกไฟล์');
+      const b64=await toBase64(f); try{ await call('apiUploadEvidence', id, f.name, f.type, b64); await refresh(); location.hash='#purchase/'+id; }catch(e){ document.getElementById('evMsg').innerHTML='<div class="error">'+e+'</div>'; }
+    };
+    const _evRemove=document.getElementById('evRemove'); if(_evRemove) _evRemove.addEventListener('click', async ()=>{ if(!confirm('ลบหลักฐาน?')) return; await call('apiRemoveEvidence', id); await refresh(); location.hash='#purchase/'+id; });
+  }
+}
+
+function viewReceipt(id){
+  const p=STATE.purchases.find(x=>String(x.id)===String(id)); if(!p) return '<div class="error">Not found</div>';
+  const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id));
+  const items=STATE.items.filter(x=>String(x.purchase_id)===String(id));
+  const bal=STATE.balances[p.customer_id]||0;
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:center"><h1>ใบเสร็จ</h1><div><button class="btn btn-sec" onclick="window.print()">พิมพ์</button> <button class="btn btn-sec" onclick="downloadReceiptPdf()">PDF</button></div></div>
+  <div class="receipt" id="receipt">
+    <div style="text-align:center">${STATE.store_name ? '<strong>'+STATE.store_name+'</strong><br>' : ''}<span>ใบเสร็จรับเงิน</span><br><small class="muted">เอกสารรับเงินภายในร้าน</small></div>
+    <div class="rule"></div>
+    <div style="font-size:13px"><b>เลขที่:</b> ${p.receipt_number}<br><b>วันที่:</b> ${dt(p.purchase_at)}<br><b>ลูกค้า:</b> ${c?c.name:'—'}<br><b>รหัส:</b> ${c?c.customer_code:'—'}</div>
+    <div class="rule"></div>
+    <table style="font-size:13px"><thead><tr><th>รายการ</th><th>จำนวน</th><th>ราคา</th><th>รวม</th></tr></thead><tbody>${items.map(it=> `<tr><td>${it.service_name}</td><td>${it.quantity}</td><td>${money(it.unit_price)}</td><td>${money(it.line_total)}</td></tr>`).join('')}</tbody></table>
+    <div class="rule"></div>
+    <div style="font-size:14px"><div style="display:flex;justify-content:space-between"><span>ยอดรวม</span><span>${money(p.subtotal)}</span></div>${Number(p.discount_amount)>0 ? '<div style="display:flex;justify-content:space-between"><span>ส่วนลดสะสมแต้ม</span><span>-'+money(p.discount_amount)+'</span></div>' : ''}<div style="display:flex;justify-content:space-between;font-weight:700"><span>ยอดสุทธิ</span><span>${money(p.total_amount)}</span></div></div>
+    <p style="text-align:center;font-size:12px" class="muted">ใช้แต้ม ${p.points_used} · ได้แต้ม ${p.points_earned} · คงเหลือ ${bal}</p>
+    ${p.status==='cancelled' ? '<p style="text-align:center;color:var(--danger)">ยกเลิกใบเสร็จแล้ว</p>' : ''}
+    <p style="text-align:center;font-size:13px">${STATE.receipt_footer||'ขอบคุณที่ใช้บริการครับ'}</p>
+  </div>
+  <div class="card"><a class="btn btn-sec" href="#purchase/${p.id}">กลับรายละเอียด</a></div>
+  `;
+}
+function downloadReceiptPdf(){
+  const el=document.getElementById('receipt');
+  // lazy: print to PDF via browser
+  const w=window.open('','_blank'); w.document.write('<html><head><title>receipt</title><style>body{font-family:sans-serif}</style></head><body>'+el.outerHTML+'</body></html>'); w.document.close(); w.print();
+}
+
+function viewAudit(){
+  return `
+  <h1>Audit Logs</h1>
+  <div class="card">
+    <table><thead><tr><th>เวลา</th><th>ผู้ทำ</th><th>เหตุการณ์</th><th>สรุป</th></tr></thead>
+    <tbody>${STATE.audit.map(l=> `<tr><td>${dt(l.created_at)}</td><td>${l.actor_name||l.actor_email}</td><td>${l.event_type}<br><small class="muted">${l.entity_type||''}</small></td><td>${l.summary}<br><small class="muted">${(l.metadata||'').slice(0,120)}</small></td></tr>`).join('')}</tbody></table>
+  </div>`;
+}
+function viewSettings(){
+  return `
+  <h1>ตั้งค่า</h1>
+  <div class="card">
+    <label>ชื่อร้าน</label><input id="s_name" value="${STATE.store_name}">
+    <label>ท้ายใบเสร็จ</label><input id="s_footer" value="${STATE.receipt_footer}">
+    <label>โลโก้ (PNG/JPG)</label><input type="file" id="s_logo" accept="image/*">
+    <button class="btn btn-primary" id="s_save">บันทึก</button><span id="s_msg" class="muted"></span>
+  </div>
+  <div class="card">
+    <h3>Allowlist</h3><p class="muted">เพิ่มอีเมลในแท็บ _config คอลัมน์ A หลังแถว admin_allowlist</p>
+    <button class="btn btn-sec" onclick="call('apiRecordExport','manual',{test:1}).then(()=>alert('audit ok'))">ทดสอบ audit</button>
+  </div>`;
+}
+function bindSettings(){
+  document.getElementById('s_save').onclick=async ()=>{
+    const payload={store_name: document.getElementById('s_name').value, receipt_footer: document.getElementById('s_footer').value};
+    const f=document.getElementById('s_logo').files[0];
+    if(f){ payload.logoBase64=await toBase64(f); payload.logoMime=f.type; }
+    try{ await call('apiSaveSettings', payload); document.getElementById('s_msg').textContent='บันทึกแล้ว'; await refresh(); }catch(e){ alert(e); }
+  };
+}
+
+// init
+(function(){
+  const h=location.hash; if(!h) location.hash='#dashboard';
+  // history filter bindings
+  document.addEventListener('click', e=>{
+    if(e.target.id==='h_search'){ FILTER.q=document.getElementById('h_q').value; FILTER.status=document.getElementById('h_status').value; FILTER.customer=document.getElementById('h_customer').value; render(); }
+    if(e.target.id==='h_csv'){
+      const rows=[['เลขที่ใบเสร็จ','ลูกค้า','วันที่','ยอดสุทธิ','สถานะ']];
+      STATE.purchases.forEach(p=>{ const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id)); rows.push([p.receipt_number,c?c.name:'', p.purchase_at, p.total_amount, p.status]); });
+      const csv=rows.map(r=> r.map(x=> '"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
+      const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='purchases.csv'; a.click();
+      call('apiRecordExport','purchase_history',{count:rows.length-1});
+    }
+  });
+  // global error handler for google.script.run
+  window.onerror=(m)=> console.error(m);
+  refresh().catch(e=> document.getElementById('app').innerHTML='<div class="error">'+e+'</div>');
+  // afterRender hook for purchase/receipt
+  const origRender=render;
+  window.render=()=>{ origRender(); const h=location.hash; if(h.startsWith('#purchase/')) afterPurchase(h.split('/')[1]); };
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+</body>
+</html>

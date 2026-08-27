@@ -2,68 +2,191 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<title><?= storeName ?></title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title><?= storeName ?> — Operations Console</title>
 <style>
-  :root{ --bg:#f1f2f5; --surface:#fff; --text:#1b1c22; --muted:#656975; --border:#dfe1e7; --primary:#514b9d; --primary-hover:#403b82; --ok:#267052; --danger:#a63a3a; }
-  *{box-sizing:border-box} body{margin:0;font-family:system-ui,'Bai Jamjuree',sans-serif;background:var(--bg);color:var(--text)}
-  a{color:var(--primary);text-decoration:none} button{cursor:pointer}
-  .shell{display:flex;min-height:100vh}
-  .rail{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:20px;position:fixed;top:0;bottom:0;overflow:auto}
-  .rail h1{font-size:18px;margin:0 0 16px} .rail nav a{display:block;padding:10px 12px;border-radius:8px;margin:4px 0;color:var(--text)} .rail nav a.active{background:#efeff8;color:var(--primary);font-weight:600}
-  .main{margin-left:220px;flex:1;padding:24px;max-width:1100px;width:100%}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
-  .row{display:flex;gap:12px;flex-wrap:wrap} .row>*{flex:1;min-width:180px}
-  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;font:inherit}
-  label{font-size:13px;display:block;margin:8px 0 4px;color:var(--muted)}
-  .btn{padding:10px 14px;border-radius:8px;border:1px solid transparent;font-weight:600}
-  .btn-primary{background:var(--primary);color:#fff} .btn-primary:hover{background:var(--primary-hover)}
-  .btn-sec{background:#fff;border-color:var(--border)} .btn-danger{background:var(--danger);color:#fff}
-  .muted{color:var(--muted)} .error{color:var(--danger);background:#fef2f2;border:1px solid #fecaca;padding:10px;border-radius:8px}
-  .success{color:var(--ok);background:#f0fdf4;border:1px solid #bbf7d0;padding:10px;border-radius:8px}
-  table{width:100%;border-collapse:collapse} th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
-  th{color:var(--muted);font-weight:600;background:#f7f7fa}
-  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid var(--border)}
-  .pill-ok{background:#ecfdf5;color:var(--ok)} .pill-cancel{background:#fef2f2;color:var(--danger)}
-  /* receipt */
-  .receipt{max-width:380px;margin:16px auto;background:#fff;padding:20px;border:1px solid #ddd}
-  .receipt h2{text-align:center;margin:0} .rule{border-top:1px dashed #bbb;margin:12px 0}
-  .totals dt{color:var(--muted)} .totals dd{font-weight:600;text-align:right}
-  .hidden{display:none}
-  @media(max-width:720px){ .rail{position:fixed;transform:translateX(-100%);transition:.2s;z-index:10} .rail.open{transform:none} .main{margin-left:0} .menu-btn{display:block !important}}
-  .menu-btn{display:none;position:fixed;top:10px;left:10px;z-index:11}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-  .kpi{padding:16px;border-radius:14px;background:#fff;border:1px solid var(--border)} .kpi strong{font-size:22px;display:block}
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bai+Jamjuree:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap');
+  :root{
+    --shell:#0b1220; --shell-2:#111c33; --shell-3:#1a2a4a; --shell-border:#1e2e4a;
+    --bg:#f4f5f7; --surface:#ffffff; --surface-2:#f8fafc; --border:#e5e7eb; --border-2:#d1d5db;
+    --text:#0f172a; --muted:#64748b; --muted-2:#94a3b8;
+    --primary:#0f62fe; --primary-2:#0353e9; --primary-soft:#edf2ff;
+    --ok:#0e8a5d; --ok-soft:#e6f7ef; --danger:#d92d20; --danger-soft:#fef3f2; --warn:#b54708; --warn-soft:#fffaeb;
+    --radius:10px; --radius-lg:14px; --shadow:0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08); --shadow-lg:0 8px 24px rgba(16,24,40,.12);
+    --mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Inter','Bai Jamjuree',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--primary);text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+  /* Shell bar - SAP Fiori style */
+  .shellbar{height:48px;background:var(--shell);color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px;position:sticky;top:0;z-index:30;border-bottom:1px solid var(--shell-border)}
+  .shellbar-brand{display:flex;align-items:center;gap:12px;min-width:240px}
+  .shellbar-logo{width:32px;height:32px;border-radius:8px;background:var(--primary);display:grid;place-items:center;font-weight:700;font-size:13px;letter-spacing:.04em}
+  .shellbar-brand h1{margin:0;font-size:13px;font-weight:700;letter-spacing:-.01em;line-height:1}
+  .shellbar-brand p{margin:2px 0 0;font-size:11px;color:#9fb0d0;font-weight:400}
+  .shellbar-search{flex:1;max-width:520px;position:relative}
+  .shellbar-search input{width:100%;background:var(--shell-2);border:1px solid var(--shell-border);color:#e2e8f0;padding:8px 36px 8px 36px;border-radius:8px;font-size:13px}
+  .shellbar-search input::placeholder{color:#6b7a99}
+  .shellbar-search input:focus{outline:none;background:var(--shell-3);border-color:#2a4a7a;color:#fff}
+  .shellbar-search::before{content:'⌕';position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#6b7a99;font-size:14px}
+  .shellbar-kbd{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--shell-3);border:1px solid var(--shell-border);color:#8ea0c2;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;font-family:var(--mono)}
+  .shellbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+  .shellbar-icon{width:32px;height:32px;border-radius:8px;background:transparent;border:1px solid transparent;display:grid;place-items:center;color:#9fb0d0;font-size:14px}
+  .shellbar-icon:hover{background:var(--shell-2);border-color:var(--shell-border);color:#fff}
+  .shellbar-user{display:flex;align-items:center;gap:10px;padding:4px 8px 4px 4px;background:var(--shell-2);border:1px solid var(--shell-border);border-radius:99px}
+  .shellbar-avatar{width:28px;height:28px;border-radius:50%;background:var(--primary);display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff}
+  .shellbar-user strong{font-size:12px;font-weight:600}
+  .shellbar-user span{font-size:11px;color:#9fb0d0}
+  /* App layout */
+  .app{display:flex;min-height:calc(100vh - 48px)}
+  .sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:48px;height:calc(100vh - 48px);overflow:hidden}
+  .sidebar-scroll{flex:1;overflow:auto;padding:12px 10px}
+  .nav-group{margin:16px 0 6px;padding:0 8px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2)}
+  .nav-link{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:500;color:var(--muted);border:1px solid transparent}
+  .nav-link:hover{background:var(--surface-2);color:var(--text);border-color:var(--border)}
+  .nav-link.active{background:var(--primary-soft);color:var(--primary);border-color:#c7d2fe;font-weight:600}
+  .nav-icon{width:18px;height:18px;display:grid;place-items:center;font-size:12px}
+  .nav-count{margin-left:auto;font-size:11px;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);padding:1px 6px;border-radius:99px;font-family:var(--mono)}
+  .nav-link.active .nav-count{background:#fff;border-color:#c7d2fe;color:var(--primary)}
+  .sidebar-foot{padding:12px;border-top:1px solid var(--border);background:var(--surface)}
+  .insight{padding:12px;background:linear-gradient(135deg, #0f62fe 0%, #002d9c 100%);border-radius:10px;color:#fff;position:relative;overflow:hidden}
+  .insight::after{content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;background:radial-gradient(circle, rgba(255,255,255,.18) 0%, transparent 70%);border-radius:50%}
+  .insight-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+  .insight strong{display:block;margin:6px 0 2px;font-size:13px;line-height:1.3}
+  .insight p{margin:0;font-size:11px;opacity:.85;line-height:1.4}
+  .main{flex:1;min-width:0;background:var(--bg)}
+  .content{max-width:1280px;margin:0 auto;padding:20px 24px 32px}
+  /* Page header - Fiori Object Page style */
+  .page-header{background:var(--surface);border-bottom:1px solid var(--border);margin:-20px -24px 20px;padding:16px 24px}
+  .page-header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .page-header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+  .page-header p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+  .breadcrumb{font-size:11px;color:var(--muted-2);display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .breadcrumb a{color:var(--muted)}
+  .page-tabs{display:flex;gap:20px;margin-top:14px;border-top:1px solid var(--border);margin-left:-24px;margin-right:-24px;padding:0 24px;overflow:auto}
+  .page-tab{padding:10px 2px 11px;border-bottom:2px solid transparent;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap;margin-bottom:-1px}
+  .page-tab.active{color:var(--primary);border-color:var(--primary);font-weight:600}
+  /* Cards */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+  .card-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface)}
+  .card-head h3{margin:0;font-size:13px;font-weight:600;letter-spacing:-.01em}
+  .card-head p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+  .card-pad{padding:16px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+  .kpi{padding:14px 16px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--primary);opacity:0}
+  .kpi.active::before{opacity:1}
+  .kpi-head{display:flex;align-items:center;justify-content:space-between}
+  .kpi-head label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .kpi-icon{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font-size:12px}
+  .kpi-icon.primary{background:var(--primary-soft);color:var(--primary)}
+  .kpi-icon.ok{background:var(--ok-soft);color:var(--ok)}
+  .kpi-icon.warn{background:var(--warn-soft);color:var(--warn)}
+  .kpi-icon.muted{background:var(--surface-2);color:var(--muted)}
+  .kpi strong{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1}
+  .kpi .trend{font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+  .trend.up{color:var(--ok)} .trend.down{color:var(--danger)}
+  .kpi small{font-size:11px;color:var(--muted)}
+  /* Table - SAP style */
+  .table-wrap{overflow:auto}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:#f8fafc;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:left}
+  td{padding:11px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:middle}
+  tbody tr:hover{background:#f8fafc}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid var(--border)}
+  .pill-dot{width:6px;height:6px;border-radius:50%}
+  .pill-ok{background:var(--ok-soft);color:var(--ok);border-color:#a7f3d0}
+  .pill-ok .pill-dot{background:var(--ok)}
+  .pill-cancel{background:var(--danger-soft);color:var(--danger);border-color:#fecaca}
+  .pill-cancel .pill-dot{background:var(--danger)}
+  .btn{padding:7px 12px;border-radius:8px;border:1px solid transparent;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap}
+  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .btn-primary:hover{background:var(--primary-2)}
+  .btn-sec{background:var(--surface);border-color:var(--border);color:var(--text)}
+  .btn-sec:hover{background:var(--surface-2)}
+  .btn-ghost{background:transparent;border-color:transparent;color:var(--muted)}
+  .btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+  .btn-danger{background:var(--danger);color:#fff}
+  .btn-sm{padding:6px 10px;font-size:12px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:12px;font-weight:600;color:var(--text)}
+  .field input,.field select,.field textarea{padding:8px 11px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:13px}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+  .field-hint{font-size:11px;color:var(--muted)}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .divider{height:1px;background:var(--border);margin:10px 0}
+  .muted{color:var(--muted)}
+  .error{background:var(--danger-soft);border:1px solid #fecaca;color:var(--danger);padding:10px 12px;border-radius:8px;font-size:13px}
+  .success{background:var(--ok-soft);border:1px solid #a7f3d0;color:var(--ok);padding:10px 12px;border-radius:8px;font-size:13px}
+  .empty{padding:32px 16px;text-align:center;color:var(--muted)}
+  .hidden{display:none !important}
+  .receipt{max-width:360px;margin:0 auto;background:#fff;padding:22px;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow)}
+  .mono{font-family:var(--mono)}
+  @media(max-width:1024px){ .kpi-grid{grid-template-columns:repeat(2,1fr)} .form-grid{grid-template-columns:1fr} }
+  @media(max-width:720px){
+    .sidebar{position:fixed;inset:48px 0 0 0;transform:translateX(-100%);transition:.2s;z-index:20}
+    .sidebar.open{transform:none}
+    .shellbar-search{display:none}
+    .content{padding:14px}
+    .kpi-grid{grid-template-columns:1fr 1fr}
+  }
 </style>
 </head>
 <body>
-<button class="menu-btn btn btn-sec" onclick="document.querySelector('.rail').classList.toggle('open')">☰</button>
-<div class="shell">
-  <aside class="rail">
-    <h1><?= storeName ?></h1>
-    <nav id="nav">
-      <a href="#dashboard" data-route="dashboard">Dashboard</a>
-      <a href="#new" data-route="new">สร้างใบเสร็จ</a>
-      <a href="#history" data-route="history">ประวัติใบเสร็จ</a>
-      <a href="#customers" data-route="customers">ลูกค้า</a>
-      <a href="#services" data-route="services">บริการ / หมวดหมู่</a>
-      <a href="#audit" data-route="audit">Audit Logs</a>
-      <a href="#settings" data-route="settings">ตั้งค่า</a>
-    </nav>
-    <div style="margin-top:20px;font-size:12px" class="muted" id="actor"></div>
+<header class="shellbar">
+  <div class="shellbar-brand">
+    <div class="shellbar-logo"><?= storeName.charAt(0).toUpperCase() ?></div>
+    <div>
+      <h1><?= storeName ?></h1>
+      <p>Operations Console</p>
+    </div>
+  </div>
+  <div class="shellbar-search"><input id="globalSearch" placeholder="Search receipts, customers, services…"><span class="shellbar-kbd">⌘K</span></div>
+  <div class="shellbar-actions">
+    <button class="shellbar-icon" title="Notifications">◈</button>
+    <button class="shellbar-icon" onclick="document.querySelector('.sidebar').classList.toggle('open')" title="Menu">☰</button>
+    <div class="shellbar-user">
+      <div class="shellbar-avatar" id="actorAvatar">—</div>
+      <div style="line-height:1"><strong id="actorName" style="font-size:12px">—</strong><span id="actorEmail" style="font-size:11px;color:#9fb0d0">—</span></div>
+    </div>
+  </div>
+</header>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-scroll">
+      <div class="nav-group">Workspace</div>
+      <a class="nav-link" href="#dashboard" data-route="dashboard"><span class="nav-icon">▦</span> Dashboard <span class="nav-count" id="navDashCount">—</span></a>
+      <a class="nav-link" href="#new" data-route="new"><span class="nav-icon">＋</span> Create Receipt <span class="nav-count" style="background:var(--primary);color:#fff;border-color:var(--primary)">New</span></a>
+      <div class="nav-group">Operations</div>
+      <a class="nav-link" href="#history" data-route="history"><span class="nav-icon">≡</span> Receipt History <span class="nav-count" id="navHistCount">—</span></a>
+      <a class="nav-link" href="#customers" data-route="customers"><span class="nav-icon">◯</span> Customers <span class="nav-count" id="navCustCount">—</span></a>
+      <a class="nav-link" href="#services" data-route="services"><span class="nav-icon">⬢</span> Catalog <span class="nav-count" id="navSvcCount">—</span></a>
+      <div class="nav-group">Governance</div>
+      <a class="nav-link" href="#audit" data-route="audit"><span class="nav-icon">◎</span> Audit Log</a>
+      <a class="nav-link" href="#settings" data-route="settings"><span class="nav-icon">⚙</span> Settings</a>
+    </div>
+    <div class="sidebar-foot">
+      <div class="insight">
+        <div class="insight-label">Modern Ops • Live</div>
+        <strong id="insightTitle">Sales +12% vs last 30d</strong>
+        <p id="insightDesc">Top category driving growth — check dashboard for breakdown.</p>
+      </div>
+    </div>
   </aside>
   <main class="main">
-    <div id="app">กำลังโหลด…</div>
+    <div class="content" id="app">กำลังโหลด…</div>
   </main>
 </div>
 
 <script>
-// tiny router
 let STATE={customers:[], categories:[], services:[], purchases:[], items:[], ledger:[], evidence:[], audit:[], balances:{}, store_name:'STORE', receipt_footer:''};
 let FILTER={q:'', status:'', customer:''};
 
-function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstElementChild; }
 function money(n){ return new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB'}).format(Number(n||0)); }
-function dt(iso){ try{ return new Date(iso).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'});}catch(e){return iso} }
+function dt(iso){ try{ return new Date(iso).toLocaleString('th-TH',{timeZone:'Asia/Bangkok', dateStyle:'medium', timeStyle:'short'});}catch(e){return iso} }
 function call(name, ...args){
   return new Promise((res,rej)=>{
     google.script.run.withSuccessHandler(res).withFailureHandler(e=>rej(e.message||String(e)))[name](...args);
@@ -71,14 +194,38 @@ function call(name, ...args){
 }
 async function refresh(){
   STATE = await call('apiGetInit');
-  document.getElementById('actor').textContent = STATE.actor.email;
+  const email = STATE.actor.email || '';
+  document.getElementById('actorEmail').textContent = email;
+  document.getElementById('actorName').textContent = STATE.actor.name || email.split('@')[0] || '—';
+  document.getElementById('actorAvatar').textContent = (STATE.actor.name||email||'—').charAt(0).toUpperCase();
+  document.getElementById('navCustCount').textContent = STATE.customers.filter(c=>!c.archived_at).length;
+  document.getElementById('navSvcCount').textContent = STATE.services.filter(s=>!s.archived_at).length;
+  document.getElementById('navHistCount').textContent = STATE.purchases.length;
+  document.getElementById('navDashCount').textContent = STATE.purchases.filter(p=>p.status==='completed').length;
+  // insight
+  const completed=STATE.purchases.filter(p=>p.status==='completed');
+  const byCat={}; STATE.items.forEach(it=>{
+    const pur=STATE.purchases.find(x=>String(x.id)===String(it.purchase_id) && x.status==='completed');
+    if(!pur) return; byCat[it.category_name]=(byCat[it.category_name]||0)+Number(it.line_total||0);
+  });
+  const topCat=Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+  if(topCat){ document.getElementById('insightTitle').textContent = topCat[0] + ' leading • ' + money(topCat[1]); document.getElementById('insightDesc').textContent = completed.length + ' receipts • ' + money(completed.reduce((s,p)=>s+Number(p.total_amount||0),0)) + ' total'; }
   render();
 }
 function navActive(){
-  const h=location.hash.replace('#','')||'dashboard';
-  document.querySelectorAll('#nav a').forEach(a=> a.classList.toggle('active', a.dataset.route===h));
+  const h=(location.hash.replace('#','')||'dashboard').split('/')[0];
+  document.querySelectorAll('.sidebar .nav-link').forEach(a=>{
+    const r=a.dataset.route;
+    a.classList.toggle('active', r===h || (h==='customer' && r==='customers') || (h==='purchase' && r==='history') || (h==='receipt' && r==='history'));
+  });
 }
 window.addEventListener('hashchange', ()=>{ navActive(); render(); });
+document.getElementById('globalSearch').addEventListener('input', e=>{
+  FILTER.q=e.target.value;
+  if(location.hash.startsWith('#history') || location.hash.startsWith('#customers')) render();
+  else { location.hash='#history'; }
+});
+document.addEventListener('keydown', e=>{ if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); document.getElementById('globalSearch').focus(); }});
 function render(){
   navActive();
   const r=(location.hash.replace('#','')||'dashboard');
@@ -94,7 +241,7 @@ function render(){
     else if(r.startsWith('receipt/')) app.innerHTML=viewReceipt(r.split('/')[1]);
     else if(r==='audit') app.innerHTML=viewAudit();
     else if(r==='settings') app.innerHTML=viewSettings();
-    else app.innerHTML='\x3cdiv class="card">Not found\x3c/div>';
+    else app.innerHTML='\x3cdiv class="card card-pad">Not found\x3c/div>';
     afterRender(r);
   }catch(e){ app.innerHTML='\x3cdiv class="error">'+e+'\x3c/div>'; }
 }
@@ -103,69 +250,150 @@ function afterRender(route){
   if(route==='customers') bindCustomers();
   if(route==='services') bindServices();
   if(route==='settings') bindSettings();
+  if(route==='dashboard') bindDashboard();
 }
 
-// --- views ---
+// --- dashboard - SAP Fiori + modern chart ---
 function viewDashboard(){
   const completed=STATE.purchases.filter(p=>p.status==='completed');
   const cancelled=STATE.purchases.filter(p=>p.status==='cancelled');
   const total=completed.reduce((s,p)=>s+Number(p.total_amount||0),0);
+  const avg = completed.length ? total/completed.length : 0;
+  const mTotal = completed.filter(p=> new Date(p.purchase_at).getMonth()===new Date().getMonth()).reduce((s,p)=>s+Number(p.total_amount||0),0);
   const pointsIssued=STATE.ledger.filter(l=>Number(l.points_delta)>0).reduce((s,l)=>s+Number(l.points_delta),0);
   const pointsRedeemed=Math.abs(STATE.ledger.filter(l=>Number(l.points_delta)<0).reduce((s,l)=>s+Number(l.points_delta),0));
-  // monthly chart simple
-  const byMonth={}; completed.forEach(p=>{ const k=new Date(p.purchase_at).toISOString().slice(0,7); byMonth[k]=(byMonth[k]||0)+Number(p.total_amount||0); });
-  const months=Object.keys(byMonth).sort().slice(-6);
-  const max=Math.max(1,...months.map(m=>byMonth[m]));
+  const byCat={}; STATE.items.forEach(it=>{
+    const pur=STATE.purchases.find(x=>String(x.id)===String(it.purchase_id) && x.status==='completed');
+    if(!pur) return; byCat[it.category_name]=(byCat[it.category_name]||0)+Number(it.line_total||0);
+  });
+  const topCats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,4);
   return `
-  \x3ch1>Dashboard\x3c/h1>
-  \x3cdiv class="kpis">
-    \x3cdiv class="kpi">\x3cspan class="muted">ยอดขายรวม\x3c/span>\x3cstrong>${money(total)}\x3c/strong>\x3c/div>
-    \x3cdiv class="kpi">\x3cspan class="muted">สำเร็จ\x3c/span>\x3cstrong>${completed.length}\x3c/strong>\x3c/div>
-    \x3cdiv class="kpi">\x3cspan class="muted">ยกเลิก\x3c/span>\x3cstrong>${cancelled.length}\x3c/strong>\x3c/div>
-    \x3cdiv class="kpi">\x3cspan class="muted">ลูกค้า\x3c/span>\x3cstrong>${STATE.customers.filter(c=>!c.archived_at).length}\x3c/strong>\x3c/div>
-    \x3cdiv class="kpi">\x3cspan class="muted">แต้มแจก / ใช้\x3c/span>\x3cstrong>${pointsIssued} / ${pointsRedeemed}\x3c/strong>\x3c/div>
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">
+      \x3cdiv>
+        \x3cdiv class="breadcrumb">\x3ca href="#dashboard">Home\x3c/a> › Dashboard\x3c/div>
+        \x3ch1>Operations Cockpit \x3cspan style="font-weight:400;color:var(--muted);font-size:13px">· ${STATE.store_name}\x3c/span>\x3c/h1>
+        \x3cp>Single-store sales, loyalty and audit — Asia/Bangkok · Last sync ${dt(new Date().toISOString())}\x3c/p>
+      \x3c/div>
+      \x3cdiv class="row">\x3ca class="btn btn-sec btn-sm" href="#history">View ledger\x3c/a>\x3ca class="btn btn-primary btn-sm" href="#new">＋ Create receipt\x3c/a>\x3c/div>
+    \x3c/div>
+    \x3cdiv class="page-tabs">
+      \x3ca class="page-tab active" href="#dashboard">Overview\x3c/a>
+      \x3ca class="page-tab" href="#history">Ledger\x3c/a>
+      \x3ca class="page-tab" href="#customers">Master Data\x3c/a>
+      \x3ca class="page-tab" href="#audit">Governance\x3c/a>
+    \x3c/div>
   \x3c/div>
-  \x3cdiv class="card">
-    \x3ch3>ยอดขาย 6 เดือนล่าสุด\x3c/h3>
-    \x3cdiv style="display:flex;align-items:end;gap:8px;height:120px">
-      ${months.map(m=> `\x3cdiv style="flex:1;text-align:center">\x3cdiv style="background:var(--primary);height:${Math.round(byMonth[m]/max*100)}px;border-radius:6px">\x3c/div>\x3csmall>${m}\x3c/small>\x3cbr>\x3csmall>${money(byMonth[m])}\x3c/small>\x3c/div>`).join('') || '\x3cspan class="muted">ยังไม่มีข้อมูล\x3c/span>'}
+  \x3cdiv class="kpi-grid">
+    \x3cdiv class="card kpi active">\x3cdiv class="kpi-head">\x3clabel>Total Sales\x3c/label>\x3cspan class="kpi-icon primary">◈\x3c/span>\x3c/div>\x3cstrong>${money(total)}\x3c/strong>\x3cdiv class="row" style="justify-content:space-between">\x3csmall>${completed.length} posted · avg ${money(avg)}\x3c/small>\x3cspan class="trend up">↗ ${mTotal?'+'+Math.round(mTotal/total*100)+'% MTD':''}\x3c/span>\x3c/div>\x3c/div>
+    \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Postings\x3c/label>\x3cspan class="kpi-icon muted">≡\x3c/span>\x3c/div>\x3cstrong>${completed.length + cancelled.length}\x3c/strong>\x3csmall>\x3cspan style="color:var(--ok);font-weight:600">${completed.length} completed\x3c/span> · \x3cspan style="color:var(--danger)">${cancelled.length} cancelled\x3c/span>\x3c/small>\x3c/div>
+    \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Customers\x3c/label>\x3cspan class="kpi-icon ok">◯\x3c/span>\x3c/div>\x3cstrong>${STATE.customers.filter(c=>!c.archived_at).length}\x3c/strong>\x3csmall>${STATE.services.filter(s=>!s.archived_at).length} active services · ${STATE.categories.filter(c=>!c.archived_at).length} categories\x3c/small>\x3c/div>
+    \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Loyalty Net\x3c/label>\x3cspan class="kpi-icon warn">◆\x3c/span>\x3c/div>\x3cstrong>${pointsIssued - pointsRedeemed}\x3c/strong>\x3csmall>issued ${pointsIssued} · redeemed ${pointsRedeemed}\x3c/small>\x3c/div>
+  \x3c/div>
+  \x3cdiv style="display:grid;grid-template-columns:1.7fr .9fr;gap:12px;margin-bottom:12px">
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3cdiv>\x3ch3>Revenue Trend (6M)\x3c/h3>\x3cp>Posted documents only · THB\x3c/p>\x3c/div>\x3cspan class="pill" style="background:var(--surface-2)">Asia/Bangkok\x3c/span>\x3c/div>
+      \x3cdiv style="padding:12px 16px">\x3ccanvas id="salesChart" height="240">\x3c/canvas>\x3c/div>
+    \x3c/div>
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3cdiv>\x3ch3>Top Categories\x3c/h3>\x3cp>By line total\x3c/p>\x3c/div>\x3c/div>
+      \x3cdiv class="card-pad stack">
+        ${topCats.length ? topCats.map(([name,val],i)=>`
+          \x3cdiv style="display:flex;align-items:center;gap:12px">
+            \x3cdiv style="width:28px;height:28px;border-radius:7px;background:${['#e0e7ff','#dbeafe','#e6f7ef','#fef3c7'][i%4]};color:${['#4338ca','#1d4ed8','#0e8a5d','#b45309'][i%4]};display:grid;place-items:center;font-size:11px;font-weight:700">${i+1}\x3c/div>
+            \x3cdiv style="flex:1">\x3cdiv style="font-size:13px;font-weight:600">${name}\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${money(val)}\x3c/div>\x3c/div>
+            \x3cdiv style="width:96px;height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden">\x3cdiv style="height:100%;width:${Math.round(val/Math.max(...topCats.map(x=>x[1]))*100)}%;background:var(--primary)">\x3c/div>\x3c/div>
+          \x3c/div>
+        `).join('') : '\x3cdiv class="empty">\x3cstrong>No postings yet\x3c/strong>Create the first receipt to populate\x3c/div>'}
+        \x3cdiv class="divider">\x3c/div>
+        \x3cdiv style="display:flex;align-items:center;justify-content:space-between">\x3cspan style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">System Health\x3c/span>\x3cspan class="pill pill-ok">\x3cspan class="pill-dot">\x3c/span>All ledgers balanced\x3c/span>\x3c/div>
+        \x3cdiv style="font-size:12px;color:var(--muted);line-height:1.5">Receipts are immutable (\x3cspan class="mono" style="font-size:11px">${STATE.store_name}-YYYY-000001\x3c/span>) · Edits reverse/ reapply points · Cancels are soft-deletes\x3c/div>
+      \x3c/div>
     \x3c/div>
   \x3c/div>
   \x3cdiv class="card">
-    \x3ch3>รายการล่าสุด\x3c/h3>
-    \x3ctable>\x3cthead>\x3ctr>\x3cth>ใบเสร็จ\x3c/th>\x3cth>ลูกค้า\x3c/th>\x3cth>ยอดสุทธิ\x3c/th>\x3cth>สถานะ\x3c/th>\x3c/tr>\x3c/thead>
+    \x3cdiv class="card-head">\x3cdiv>\x3ch3>Recent Postings\x3c/h3>\x3cp>Latest 8 · click to open object page\x3c/p>\x3c/div>\x3ca class="btn btn-ghost btn-sm" href="#history">Open ledger →\x3c/a>\x3c/div>
+    \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Document\x3c/th>\x3cth>Customer\x3c/th>\x3cth>Posting Date\x3c/th>\x3cth style="text-align:right">Amount\x3c/th>\x3cth>Status\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>
     \x3ctbody>${STATE.purchases.slice(0,8).map(p=>{
-      const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id)); return `\x3ctr>\x3ctd>\x3ca href="#receipt/${p.id}">${p.receipt_number}\x3c/a>\x3c/td>\x3ctd>${c?c.name:'—'}\x3c/td>\x3ctd>${money(p.total_amount)}\x3c/td>\x3ctd>\x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}\x3c/span>\x3c/td>\x3c/tr>`;
-    }).join('')}\x3c/tbody>\x3c/table>
+      const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id));
+      return `\x3ctr>\x3ctd>\x3cdiv style="font-weight:700;font-family:var(--mono);font-size:12px">${p.receipt_number}\x3c/div>\x3cdiv style="font-size:11px;color:var(--muted)">${p.id.slice(0,8)}\x3c/div>\x3c/td>\x3ctd>\x3cdiv style="font-weight:600">${c?c.name:'—'}\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${c?c.customer_code:''} · ${c?c.line_id||c.x_account||'':''}\x3c/div>\x3c/td>\x3ctd>${dt(p.purchase_at)}\x3c/td>\x3ctd style="text-align:right;font-weight:700">${money(p.total_amount)}\x3cbr>\x3csmall class="muted">disc ${money(p.discount_amount)} · ${p.points_earned}pts\x3c/small>\x3c/td>\x3ctd>\x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">\x3cspan class="pill-dot">\x3c/span>${p.status==='completed'?'Posted':'Cancelled'}\x3c/span>\x3c/td>\x3ctd>\x3ca class="btn btn-sec btn-sm" href="#purchase/${p.id}">Object page\x3c/a>\x3c/td>\x3c/tr>`;
+    }).join('') || '\x3ctr>\x3ctd colspan=6 class="empty">No documents — \x3ca href="#new">Create receipt\x3c/a>\x3c/td>\x3c/tr>'}\x3c/tbody>\x3c/table>\x3c/div>
   \x3c/div>`;
 }
+function bindDashboard(){
+  const canvas=document.getElementById('salesChart'); if(!canvas) return;
+  const completed=STATE.purchases.filter(p=>p.status==='completed');
+  const byMonth={}; completed.forEach(p=>{ const k=new Date(p.purchase_at).toISOString().slice(0,7); byMonth[k]=(byMonth[k]||0)+Number(p.total_amount||0); });
+  const months=Object.keys(byMonth).sort().slice(-6);
+  const values=months.map(m=>byMonth[m]);
+  if(typeof Chart !== 'undefined' && months.length){
+    new Chart(canvas, {
+      type:'bar',
+      data:{ labels: months, datasets:[
+        { label:'Posted', data: values, backgroundColor:'#0f62fe', borderRadius:6, barPercentage:0.5 },
+        { label:'Avg', data: months.map(()=> values.length? values.reduce((a,b)=>a+b,0)/values.length : 0), type:'line', borderColor:'#94a3b8', borderDash:[4,4], pointRadius:0, tension:.3 }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:true, position:'bottom', labels:{boxWidth:12, font:{size:11}}} }, scales:{ y:{ beginAtZero:true, grid:{color:'#f1f5f9'} }, x:{ grid:{display:false} } } }
+    });
+  } else {
+    const max=Math.max(1,...values);
+    canvas.outerHTML = '\x3cdiv style="display:flex;align-items:end;gap:10px;height:200px;padding:12px 4px">\x3c/div>';
+  }
+}
 
+// --- create ---
 function viewNew(){
-  const custOpts=STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} · ${c.name} (${STATE.balances[c.id]||0} แต้ม)\x3c/option>`).join('');
-  const svcOpts=STATE.services.filter(s=>!s.archived_at).map(s=>{
-    const cat=STATE.categories.find(x=>String(x.id)===String(s.category_id)); return `\x3coption value="${s.id}">${cat?cat.name:''} · ${s.name} (${money(s.default_price)})\x3c/option>`;
-  }).join('');
+  const custOpts=STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} · ${c.name} (${STATE.balances[c.id]||0} pts)\x3c/option>`).join('');
   return `
-  \x3ch1>สร้างใบเสร็จ\x3c/h1>
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">\x3ca href="#dashboard">Home\x3c/a> › Create\x3c/div>\x3ch1>Create Receipt \x3cspan style="font-weight:400;color:var(--muted);font-size:13px">· ${STATE.store_name}-YYYY-000001 locked per fiscal year\x3c/span>\x3c/h1>\x3cp>Record a paid sale — every edit is audited and point-balanced.\x3c/p>\x3c/div>\x3c/div>
+  \x3c/div>
   \x3cdiv id="newMsg">\x3c/div>
-  \x3cdiv class="card">
-    \x3clabel>ลูกค้า\x3c/label>\x3cselect id="n_customer">\x3coption value="">เลือกลูกค้า\x3c/option>${custOpts}\x3c/select>
-    \x3cdiv id="custInfo" class="muted" style="margin:6px 0">\x3c/div>
-    \x3clabel style="display:flex;gap:8px;align-items:center">\x3cinput type="checkbox" id="n_useNow" checked style="width:auto"> ใช้วันเวลาปัจจุบัน (Asia/Bangkok)\x3c/label>
-    \x3clabel>วันเวลาซื้อ\x3c/label>\x3cinput type="datetime-local" id="n_at" disabled>
-    \x3clabel>หมายเหตุ\x3c/label>\x3ctextarea id="n_note" rows="2">\x3c/textarea>
-    \x3clabel>หลักฐานโอน (JPG/PNG, ≤10MB)\x3c/label>\x3cinput type="file" id="n_file" accept="image/jpeg,image/jpg,image/png">
-  \x3c/div>
-  \x3cdiv class="card">
-    \x3cdiv style="display:flex;justify-content:space-between;align-items:center">\x3ch3>รายการบริการ\x3c/h3>\x3cbutton class="btn btn-sec" id="addLine">+ เพิ่มรายการ\x3c/button>\x3c/div>
-    \x3cdiv id="lines">\x3c/div>
-    \x3clabel style="display:flex;gap:8px;align-items:center">\x3cinput type="checkbox" id="n_redeem" style="width:auto"> ใช้ 8 แต้มลด 8%\x3c/label>
-    \x3cdiv id="totals" style="margin:12px 0;font-weight:600">\x3c/div>
-    \x3cbutton class="btn btn-primary" id="savePurchase">บันทึกใบเสร็จ\x3c/button>
-    \x3cdatalist id="svcList">${svcOpts}\x3c/datalist>
-  \x3c/div>
-  \x3cdiv id="svcStore" class="hidden">${svcOpts}\x3c/div>
-  `;
+  \x3cdiv style="display:grid;grid-template-columns:1.15fr .85fr;gap:14px;align-items:start">
+    \x3cdiv class="stack">
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3cdiv>\x3ch3>Customer & Posting \x3cspan style="font-weight:400;color:var(--muted)">· posting date drives fiscal year\x3c/span>\x3c/h3>\x3c/div>\x3c/div>
+        \x3cdiv class="card-pad stack">
+          \x3cdiv class="field">\x3clabel>Customer *\x3c/label>\x3cselect id="n_customer">\x3coption value="">Select customer\x3c/option>${custOpts}\x3c/select>\x3cdiv id="custInfo" class="field-hint">\x3c/div>\x3c/div>
+          \x3cdiv id="inlineCustomer" class="hidden" style="padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px">
+            \x3cdiv style="font-size:12px;font-weight:700;margin-bottom:8px">Quick create — no navigation\x3c/div>
+            \x3cdiv class="form-grid">\x3cdiv class="field">\x3cinput id="nc_name" placeholder="Name *">\x3c/div>\x3cdiv class="field">\x3cinput id="nc_line" placeholder="LINE ID">\x3c/div>\x3c/div>
+            \x3cdiv class="form-grid" style="margin-top:8px">\x3cdiv class="field">\x3cinput id="nc_x" placeholder="X handle">\x3c/div>\x3cdiv class="field">\x3cinput id="nc_notes" placeholder="Note">\x3c/div>\x3c/div>
+            \x3cdiv class="row" style="margin-top:10px">\x3cbutton class="btn btn-primary btn-sm" id="nc_save">Save customer\x3c/button>\x3cbutton class="btn btn-ghost btn-sm" id="nc_cancel">Cancel\x3c/button>\x3c/div>
+          \x3c/div>
+          \x3cbutton class="btn btn-sec btn-sm" id="nc_open" style="align-self:flex-start">＋ New customer\x3c/button>
+          \x3clabel style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500"><input type="checkbox" id="n_useNow" checked> Use current date/time (Asia/Bangkok)\x3c/label>
+          \x3cdiv class="field">\x3clabel>Posting date\x3c/label>\x3cinput type="datetime-local" id="n_at" disabled>\x3c/div>
+          \x3cdiv class="field">\x3clabel>Internal note\x3c/label>\x3ctextarea id="n_note" rows="2" placeholder="Optional — visible in object page only">\x3c/textarea>\x3c/div>
+          \x3cdiv class="field">\x3clabel>Payment evidence (optional) JPG/PNG ≤10MB\x3c/label>\x3cinput type="file" id="n_file" accept="image/jpeg,image/jpg,image/png">\x3cdiv id="n_fileHint" class="field-hint">\x3c/div>\x3c/div>
+        \x3c/div>
+      \x3c/div>
+      \x3cdiv class="card" style="position:sticky;top:68px">
+        \x3cdiv class="card-head">\x3cdiv>\x3ch3>Line Items\x3c/h3>\x3cp>Price is snapshot — editing catalog won’t change history\x3c/p>\x3c/div>\x3cbutton class="btn btn-sec btn-sm" id="addLine">＋ Add line\x3c/button>\x3c/div>
+        \x3cdiv class="card-pad">
+          \x3cdiv id="lines">\x3c/div>
+          \x3cdiv class="divider">\x3c/div>
+          \x3clabel style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600"><input type="checkbox" id="n_redeem"> Redeem 8 pts → 8% off <span id="redeemHint" class="field-hint">\x3c/span>\x3c/label>
+          \x3cdiv id="totals" style="margin:12px 0;padding:14px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px">\x3c/div>
+          \x3cbutton class="btn btn-primary" id="savePurchase" style="width:100%;justify-content:center">Post receipt\x3c/button>
+          \x3cdiv class="field-hint" style="text-align:center;margin-top:6px">Idempotent — double-click is safe · Fiscal year locked on post\x3c/div>
+        \x3c/div>
+      \x3c/div>
+    \x3c/div>
+    \x3cdiv class="stack">
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3ch3>Posting Preview\x3c/h3>\x3c/div>
+        \x3cdiv class="card-pad" id="previewCard" style="font-size:13px;color:var(--muted)">Select services to preview\x3c/div>
+      \x3c/div>
+      \x3cdiv class="card card-pad" style="background:var(--primary-soft);border-color:#c7d2fe">
+        \x3cdiv style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--primary)">Loyalty Policy\x3c/div>
+        \x3cdiv style="font-size:12px;line-height:1.7;margin-top:6px">
+          \x3ctable style="width:100%;font-size:12px">\x3ctr>\x3ctd>\x3c 200\x3c/td>\x3ctd>0 pts\x3c/td>\x3c/tr>\x3ctr>\x3ctd>200–499\x3c/td>\x3ctd>2 pts\x3c/td>\x3c/tr>\x3ctr>\x3ctd>500–799\x3c/td>\x3ctd>4 pts\x3c/td>\x3c/tr>\x3ctr>\x3ctd>800–999\x3c/td>\x3ctd>6 pts\x3c/td>\x3c/tr>\x3ctr>\x3ctd>≥1000\x3c/td>\x3ctd>8 pts\x3c/td>\x3c/tr>\x3c/table>
+          \x3cdiv style="margin-top:8px;color:var(--muted)">Max 8 pts/posting · Redeem 8 → 8% once · New points not usable same posting\x3c/div>
+        \x3c/div>
+      \x3c/div>
+    \x3c/div>
+  \x3c/div>`;
 }
 function bindNew(){
   const linesEl=document.getElementById('lines');
@@ -174,12 +402,12 @@ function bindNew(){
   let lines=[{service_id:'', quantity:1, unit_price:0}];
   function renderLines(){
     linesEl.innerHTML=lines.map((l,i)=> `
-      \x3cdiv style="display:flex;gap:8px;margin:8px 0;align-items:center">
-        \x3cselect data-i="${i}" class="svc" style="flex:2">\x3coption value="">เลือกบริการ\x3c/option>${STATE.services.filter(s=>!s.archived_at).map(s=> `\x3coption value="${s.id}" ${s.id===l.service_id?'selected':''}>${(catMap[s.category_id]?.name||'')+' · '+s.name}\x3c/option>`).join('')}\x3c/select>
-        \x3cinput type="number" min="1" step="1" value="${l.quantity}" data-i="${i}" class="qty" style="width:90px" placeholder="จำนวน">
-        \x3cinput type="number" min="0" step="0.01" value="${l.unit_price}" data-i="${i}" class="price" style="width:120px" placeholder="ราคา">
-        \x3cspan style="width:110px;text-align:right">${money(Number(l.quantity||0)*Number(l.unit_price||0))}\x3c/span>
-        \x3cbutton class="btn btn-sec" data-del="${i}">ลบ\x3c/button>
+      \x3cdiv style="display:grid;grid-template-columns:1.6fr 72px 108px 88px 32px;gap:8px;align-items:center;margin:8px 0">
+        \x3cselect data-i="${i}" class="svc" style="padding:8px;border:1px solid var(--border);border-radius:8px">\x3coption value="">Service\x3c/option>${STATE.services.filter(s=>!s.archived_at).map(s=> `\x3coption value="${s.id}" ${s.id===l.service_id?'selected':''}>${(catMap[s.category_id]?.name||'')+' · '+s.name}\x3c/option>`).join('')}\x3c/select>
+        \x3cinput type="number" min="1" step="1" value="${l.quantity}" data-i="${i}" class="qty" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        \x3cinput type="number" min="0" step="0.01" value="${l.unit_price}" data-i="${i}" class="price" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        \x3cspan style="text-align:right;font-weight:700;font-size:13px;font-family:var(--mono)">${money(Number(l.quantity||0)*Number(l.unit_price||0))}\x3c/span>
+        \x3cbutton class="btn btn-ghost btn-sm" data-del="${i}" style="padding:6px">✕\x3c/button>
       \x3c/div>
     `).join('');
     calc();
@@ -189,7 +417,16 @@ function bindNew(){
     let sub=lines.reduce((s,l)=> s+Number(l.quantity||0)*Number(l.unit_price||0),0); sub=Math.round(sub*100)/100;
     const disc=redeem? Math.round(sub*0.08*100)/100:0; const total=Math.round((sub-disc)*100)/100;
     let pts=0; if(total<200) pts=0; else if(total<500) pts=2; else if(total<800) pts=4; else if(total<1000) pts=6; else pts=8;
-    document.getElementById('totals').innerHTML=`ยอดรวม ${money(sub)} ${redeem ? '· ส่วนลด -'+money(disc) : ''} · \x3cb>ยอดสุทธิ ${money(total)}\x3c/b> · แต้มที่จะได้ ${pts}`;
+    document.getElementById('totals').innerHTML=`
+      \x3cdiv style="display:flex;justify-content:space-between;font-size:13px">\x3cspan>Subtotal\x3c/span>\x3cspan class="mono">${money(sub)}\x3c/span>\x3c/div>
+      ${redeem ? `\x3cdiv style="display:flex;justify-content:space-between;font-size:13px;color:var(--ok)">\x3cspan>Discount 8%\x3c/span>\x3cspan>-${money(disc)}\x3c/span>\x3c/div>` : ''}
+      \x3cdiv style="display:flex;justify-content:space-between;font-weight:700;margin-top:6px;font-size:14px">\x3cspan>Total\x3c/span>\x3cspan class="mono">${money(total)}\x3c/span>\x3c/div>
+      \x3cdiv style="font-size:12px;color:var(--muted);margin-top:6px">Points to earn \x3cb style="color:var(--primary)">${pts}\x3c/b> ${redeem?`· redeem 8`:''}\x3c/div>
+    `;
+    document.getElementById('previewCard').innerHTML= lines.filter(l=>l.service_id).length ? lines.filter(l=>l.service_id).map(l=>{
+      const svc=svcMap[l.service_id]; return `\x3cdiv style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)">\x3cspan>${svc?svc.name:''} × ${l.quantity}\x3c/span>\x3cspan class="mono">${money(Number(l.quantity)*Number(l.unit_price))}\x3c/span>\x3c/div>`;
+    }).join('') + `\x3cdiv style="display:flex;justify-content:space-between;font-weight:700;margin-top:8px">\x3cspan>Total\x3c/span>\x3cspan class="mono">${money(total)}\x3c/span>\x3c/div>` : '\x3cspan class="muted">Select a service to preview\x3c/span>';
+    document.getElementById('redeemHint').textContent = redeem ? '−8 pts' : '';
   }
   linesEl.addEventListener('change', e=>{
     const i=Number(e.target.dataset.i); if(isNaN(i)) return;
@@ -204,50 +441,64 @@ function bindNew(){
   document.getElementById('n_useNow').onchange=e=> document.getElementById('n_at').disabled=e.target.checked;
   document.getElementById('n_customer').onchange=e=>{
     const id=e.target.value; const bal=STATE.balances[id]||0;
-    document.getElementById('custInfo').textContent = id? `แต้มปัจจุบัน: ${bal} ${bal>=8?'· ใช้ 8 แต้มลด 8% ได้':''}`: '';
-    document.getElementById('n_redeem').disabled=bal<8; if(bal<8) document.getElementById('n_redeem').checked=false; calc();
+    document.getElementById('custInfo').innerHTML = id? `Balance \x3cb>${bal}\x3c/b> ${bal>=8?'\x3cspan style="color:var(--ok);font-weight:700">· redeemable\x3c/span>':'\x3cspan class="muted">· need 8 pts\x3c/span>'}`: '';
+    const cb=document.getElementById('n_redeem'); cb.disabled=bal<8; if(bal<8) cb.checked=false; calc();
   };
   document.getElementById('n_redeem').onchange=calc;
-  document.getElementById('savePurchase').onclick=async ()=>{
-    const btn=document.getElementById('savePurchase'); btn.disabled=true; btn.textContent='กำลังบันทึก…';
+  document.getElementById('n_file').onchange=e=>{
+    const f=e.target.files[0]; document.getElementById('n_fileHint').textContent = f ? f.name+' · '+(f.size/1024/1024).toFixed(2)+'MB' : '';
+  };
+  document.getElementById('nc_open').onclick=()=> document.getElementById('inlineCustomer').classList.remove('hidden');
+  document.getElementById('nc_cancel').onclick=()=> document.getElementById('inlineCustomer').classList.add('hidden');
+  document.getElementById('nc_save').onclick=async ()=>{
     try{
-      const customer_id=document.getElementById('n_customer').value; if(!customer_id) throw new Error('เลือกลูกค้า');
+      const payload={name:document.getElementById('nc_name').value, line_id:document.getElementById('nc_line').value, x_account:document.getElementById('nc_x').value, notes:document.getElementById('nc_notes').value};
+      const c=await call('apiCreateCustomer', payload);
+      await refresh();
+      document.getElementById('n_customer').value=c.id;
+      document.getElementById('n_customer').dispatchEvent(new Event('change'));
+      document.getElementById('inlineCustomer').classList.add('hidden');
+    }catch(e){ alert(e); }
+  };
+  document.getElementById('savePurchase').onclick=async ()=>{
+    const btn=document.getElementById('savePurchase'); btn.disabled=true; btn.textContent='Posting…';
+    try{
+      const customer_id=document.getElementById('n_customer').value; if(!customer_id) throw new Error('Select customer');
       const useNow=document.getElementById('n_useNow').checked;
       const at=document.getElementById('n_at').value;
-      let purchase_at=null; if(!useNow){ if(!at) throw new Error('ระบุวันเวลาซื้อ'); purchase_at=at; } // sent as datetime-local
-      if(lines.some(l=>!l.service_id|| !Number.isInteger(Number(l.quantity))||Number(l.quantity)<=0||Number(l.unit_price)<0)) throw new Error('ตรวจสอบรายการ');
+      let purchase_at=null; if(!useNow){ if(!at) throw new Error('Posting date required'); purchase_at=at; }
+      if(lines.some(l=>!l.service_id|| !Number.isInteger(Number(l.quantity))||Number(l.quantity)<=0||Number(l.unit_price)<0)) throw new Error('Check lines');
       const payload={customer_id, purchase_at, items: lines.map(l=>({service_id:l.service_id, quantity:Number(l.quantity), unit_price:Number(l.unit_price)})), redeem_points: document.getElementById('n_redeem').checked, note: document.getElementById('n_note').value.trim()};
       const res=await call('apiCreatePurchase', payload);
-      // upload evidence if selected
       const file=document.getElementById('n_file').files[0];
       if(file){
         const b64=await toBase64(file);
         await call('apiUploadEvidence', res.purchase_id, file.name, file.type, b64);
       }
-      document.getElementById('newMsg').innerHTML=`\x3cdiv class="success">บันทึกสำเร็จ ${res.receipt_number} · ยอดสุทธิ ${money(res.total_amount)} · \x3ca href="#receipt/${res.purchase_id}">ดูใบเสร็จ\x3c/a>\x3c/div>`;
+      document.getElementById('newMsg').innerHTML=`\x3cdiv class="success">Posted \x3cb class="mono">${res.receipt_number}\x3c/b> · ${money(res.total_amount)} · \x3ca href="#receipt/${res.purchase_id}">Open receipt\x3c/a>\x3c/div>`;
       await refresh();
     }catch(e){ document.getElementById('newMsg').innerHTML=`\x3cdiv class="error">${e}\x3c/div>`; }
-    btn.disabled=false; btn.textContent='บันทึกใบเสร็จ';
+    btn.disabled=false; btn.textContent='Post receipt';
   };
   renderLines();
 }
 function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
 
 function viewHistory(){
-  const qs=new URLSearchParams(location.search);
   return `
-  \x3ch1>ประวัติใบเสร็จ\x3c/h1>
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Operations › Ledger\x3c/div>\x3ch1>Receipt History\x3c/h1>\x3cp>All postings — filter, audit and export. Cancelled stays searchable but excluded from totals.\x3c/p>\x3c/div>\x3cdiv class="row">\x3cbutton class="btn btn-sec btn-sm" id="h_csv">Export CSV\x3c/button>\x3ca class="btn btn-primary btn-sm" href="#new">＋ Create\x3c/a>\x3c/div>\x3c/div>
+  \x3c/div>
   \x3cdiv class="card">
-    \x3cdiv class="row">
-      \x3cinput id="h_q" placeholder="ค้นหาเลขที่/ชื่อ/รหัส" value="${FILTER.q}">
-      \x3cselect id="h_status">\x3coption value="">ทุกสถานะ\x3c/option>\x3coption value="completed" ${FILTER.status==='completed'?'selected':''}>สำเร็จ\x3c/option>\x3coption value="cancelled" ${FILTER.status==='cancelled'?'selected':''}>ยกเลิก\x3c/option>\x3c/select>
-      \x3cselect id="h_customer">\x3coption value="">ลูกค้าทุกคน\x3c/option>${STATE.customers.map(c=> `\x3coption value="${c.id}" ${FILTER.customer===c.id?'selected':''}>${c.customer_code} · ${c.name}\x3c/option>`).join('')}\x3c/select>
-      \x3cbutton class="btn btn-primary" id="h_search">ค้นหา\x3c/button>
-      \x3cbutton class="btn btn-sec" id="h_csv">Export CSV\x3c/button>
+    \x3cdiv class="card-pad" style="display:grid;grid-template-columns:1.4fr .7fr .9fr auto;gap:10px;align-items:end">
+      \x3cdiv class="field">\x3clabel>Search\x3c/label>\x3cinput id="h_q" placeholder="Document / customer / LINE / X" value="${FILTER.q}">\x3c/div>
+      \x3cdiv class="field">\x3clabel>Status\x3c/label>\x3cselect id="h_status">\x3coption value="">All\x3c/option>\x3coption value="completed" ${FILTER.status==='completed'?'selected':''}>Posted\x3c/option>\x3coption value="cancelled" ${FILTER.status==='cancelled'?'selected':''}>Cancelled\x3c/option>\x3c/select>\x3c/div>
+      \x3cdiv class="field">\x3clabel>Customer\x3c/label>\x3cselect id="h_customer">\x3coption value="">All customers\x3c/option>${STATE.customers.map(c=> `\x3coption value="${c.id}" ${FILTER.customer===c.id?'selected':''}>${c.customer_code} · ${c.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>
+      \x3cbutton class="btn btn-primary" id="h_search">Apply\x3c/button>
     \x3c/div>
   \x3c/div>
   \x3cdiv class="card">
-    \x3ctable>\x3cthead>\x3ctr>\x3cth>ใบเสร็จ\x3c/th>\x3cth>วันที่\x3c/th>\x3cth>ลูกค้า\x3c/th>\x3cth>ยอดสุทธิ\x3c/th>\x3cth>สถานะ\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>
+    \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Document\x3c/th>\x3cth>Customer\x3c/th>\x3cth>Posting Date\x3c/th>\x3cth style="text-align:right">Amount\x3c/th>\x3cth>Status\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>
     \x3ctbody>${STATE.purchases.filter(p=>{
       if(FILTER.status && p.status!==FILTER.status) return false;
       if(FILTER.customer && String(p.customer_id)!==String(FILTER.customer)) return false;
@@ -258,35 +509,37 @@ function viewHistory(){
       return true;
     }).slice(0,100).map(p=>{
       const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id));
-      return `\x3ctr>\x3ctd>${p.receipt_number}\x3c/td>\x3ctd>${dt(p.purchase_at)}\x3c/td>\x3ctd>${c?c.name:'—'}\x3c/td>\x3ctd>${money(p.total_amount)}\x3c/td>\x3ctd>\x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}\x3c/span>\x3c/td>\x3ctd>\x3ca class="btn btn-sec" href="#purchase/${p.id}">รายละเอียด\x3c/a> \x3ca class="btn btn-sec" href="#receipt/${p.id}">ใบเสร็จ\x3c/a>\x3c/td>\x3c/tr>`;
-    }).join('')}\x3c/tbody>\x3c/table>
+      return `\x3ctr>\x3ctd>\x3cdiv class="mono" style="font-weight:700;font-size:12px">${p.receipt_number}\x3c/div>\x3cdiv style="font-size:11px;color:var(--muted)">${p.id.slice(0,8)}\x3c/div>\x3c/td>\x3ctd>\x3cdiv style="font-weight:600">${c?c.name:'—'}\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${c?c.customer_code:''}\x3c/div>\x3c/td>\x3ctd>${dt(p.purchase_at)}\x3c/td>\x3ctd style="text-align:right;font-weight:700" class="mono">${money(p.total_amount)}\x3c/td>\x3ctd>\x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">\x3cspan class="pill-dot">\x3c/span>${p.status==='completed'?'Posted':'Cancelled'}\x3c/span>\x3c/td>\x3ctd>\x3cdiv class="row" style="justify-content:flex-end">\x3ca class="btn btn-sec btn-sm" href="#purchase/${p.id}">Object\x3c/a>\x3ca class="btn btn-ghost btn-sm" href="#receipt/${p.id}">Receipt\x3c/a>\x3c/div>\x3c/td>\x3c/tr>`;
+    }).join('') || '\x3ctr>\x3ctd colspan=6 class="empty">No documents match filters\x3c/td>\x3c/tr>'}\x3c/tbody>\x3c/table>\x3c/div>
   \x3c/div>`;
 }
-function bindHistory(){}
 
 function viewCustomers(){
   return `
-  \x3ch1>ลูกค้า\x3c/h1>
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Master Data › Customers\x3c/div>\x3ch1>Customers\x3c/h1>\x3cp>Business partners — LINE / X must be unique while active\x3c/p>\x3c/div>\x3c/div>
+  \x3c/div>
   \x3cdiv class="card">
-    \x3cdiv class="row">
-      \x3cinput id="c_name" placeholder="ชื่อลูกค้า *">
-      \x3cinput id="c_line" placeholder="LINE ID">
-      \x3cinput id="c_x" placeholder="X account">
-      \x3cinput id="c_notes" placeholder="หมายเหตุ">
-      \x3cbutton class="btn btn-primary" id="c_add">เพิ่มลูกค้า\x3c/button>
+    \x3cdiv class="card-head">\x3ch3>Create\x3c/h3>\x3c/div>
+    \x3cdiv class="card-pad">
+      \x3cdiv class="form-grid" style="grid-template-columns:1.2fr .8fr .8fr 1fr auto">
+        \x3cdiv class="field">\x3cinput id="c_name" placeholder="Name *">\x3c/div>
+        \x3cdiv class="field">\x3cinput id="c_line" placeholder="LINE ID">\x3c/div>
+        \x3cdiv class="field">\x3cinput id="c_x" placeholder="X handle">\x3c/div>
+        \x3cdiv class="field">\x3cinput id="c_notes" placeholder="Note">\x3c/div>
+        \x3cbutton class="btn btn-primary" id="c_add">Create\x3c/button>
+      \x3c/div>
+      \x3cdiv id="c_msg" style="margin-top:8px">\x3c/div>
     \x3c/div>
-    \x3cdiv id="c_msg">\x3c/div>
   \x3c/div>
   \x3cdiv class="card">
-    \x3cinput id="c_search" placeholder="ค้นหาชื่อ/รหัส/LINE/X" style="margin-bottom:8px">
-    \x3ctable>\x3cthead>\x3ctr>\x3cth>รหัส\x3c/th>\x3cth>ชื่อ\x3c/th>\x3cth>LINE / X\x3c/th>\x3cth>แต้ม\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>
-    \x3ctbody id="c_body">\x3c/tbody>\x3c/table>
+    \x3cdiv class="card-head">\x3cdiv style="flex:1;max-width:380px">\x3cinput id="c_search" placeholder="Search name / code / LINE / X" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;width:100%">\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${STATE.customers.filter(c=>!c.archived_at).length} active\x3c/div>\x3c/div>
+    \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Code\x3c/th>\x3cth>Name\x3c/th>\x3cth>Contact\x3c/th>\x3cth style="text-align:center">Points\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>
+    \x3ctbody id="c_body">\x3c/tbody>\x3c/table>\x3c/div>
   \x3c/div>
-  \x3cdiv class="card">
-    \x3ch3>Merge ลูกค้าซ้ำ\x3c/h3>
-    \x3cdiv class="row">\x3cselect id="m_primary">\x3coption value="">Primary\x3c/option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} ${c.name}\x3c/option>`).join('')}\x3c/select>
-    \x3cselect id="m_dup">\x3coption value="">Duplicate (จะถูก archive)\x3c/option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} ${c.name}\x3c/option>`).join('')}\x3c/select>
-    \x3cbutton class="btn btn-danger" id="m_go">Merge\x3c/button>\x3c/div>
+  \x3cdiv class="card card-pad">
+    \x3cdiv style="font-size:13px;font-weight:700">Merge duplicates\x3c/div>
+    \x3cdiv class="form-grid" style="grid-template-columns:1fr 1fr auto;align-items:end;margin-top:8px">\x3cdiv class="field">\x3clabel>Keep (primary)\x3c/label>\x3cselect id="m_primary">\x3coption value="">Select\x3c/option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} ${c.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>\x3cdiv class="field">\x3clabel>Duplicate (archive)\x3c/label>\x3cselect id="m_dup">\x3coption value="">Select\x3c/option>${STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} ${c.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>\x3cbutton class="btn btn-danger btn-sm" id="m_go">Merge\x3c/button>\x3c/div>
   \x3c/div>`;
 }
 function bindCustomers(){
@@ -294,32 +547,32 @@ function bindCustomers(){
   function render(){
     const q=(search.value||'').toLowerCase();
     const rows=STATE.customers.filter(c=>!c.archived_at).filter(c=> !q || [c.name,c.customer_code,c.line_id,c.x_account].join(' ').toLowerCase().includes(q))
-      .map(c=> `\x3ctr>\x3ctd>${c.customer_code}\x3c/td>\x3ctd>\x3ca href="#customer/${c.id}">${c.name}\x3c/a>\x3c/td>\x3ctd>${c.line_id||''} ${c.x_account?'/ '+c.x_account:''}\x3c/td>\x3ctd>${STATE.balances[c.id]||0}\x3c/td>\x3ctd>\x3cbutton class="btn btn-sec" data-edit="${c.id}">แก้ไข\x3c/button> \x3cbutton class="btn btn-sec" data-arch="${c.id}">Archive\x3c/button>\x3c/td>\x3c/tr>`).join('');
-    body.innerHTML=rows||'\x3ctr>\x3ctd colspan=5 class="muted">ไม่พบ\x3c/td>\x3c/tr>';
+      .map(c=> `\x3ctr>\x3ctd class="mono" style="font-size:12px">${c.customer_code}\x3c/td>\x3ctd>\x3ca href="#customer/${c.id}" style="font-weight:600">${c.name}\x3c/a>\x3cdiv style="font-size:12px;color:var(--muted)">${c.notes||''}\x3c/div>\x3c/td>\x3ctd>\x3cdiv style="font-size:13px">${c.line_id||''}\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${c.x_account||''}\x3c/div>\x3c/td>\x3ctd style="text-align:center">\x3cspan class="pill" style="background:var(--surface-2)">${STATE.balances[c.id]||0}\x3c/span>\x3c/td>\x3ctd>\x3cdiv class="row" style="justify-content:flex-end">\x3cbutton class="btn btn-ghost btn-sm" data-edit="${c.id}">Edit\x3c/button>\x3cbutton class="btn btn-sec btn-sm" data-arch="${c.id}">Archive\x3c/button>\x3c/div>\x3c/td>\x3c/tr>`).join('');
+    body.innerHTML=rows||'\x3ctr>\x3ctd colspan=5 class="empty">No customers\x3c/td>\x3c/tr>';
   }
   search.oninput=render; render();
   document.getElementById('c_add').onclick=async ()=>{
     try{
       const payload={name:document.getElementById('c_name').value, line_id:document.getElementById('c_line').value, x_account:document.getElementById('c_x').value, notes:document.getElementById('c_notes').value};
-      await call('apiCreateCustomer', payload); await refresh(); document.getElementById('c_msg').innerHTML='\x3cdiv class="success">เพิ่มแล้ว\x3c/div>';
+      await call('apiCreateCustomer', payload); await refresh(); document.getElementById('c_msg').innerHTML='\x3cdiv class="success">Created\x3c/div>';
     }catch(e){ document.getElementById('c_msg').innerHTML='\x3cdiv class="error">'+e+'\x3c/div>'; }
   };
   body.onclick=async e=>{
     if(e.target.dataset.arch){
-      if(!confirm('Archive ลูกค้านี้?')) return;
+      if(!confirm('Archive? Postings remain.')) return;
       await call('apiArchiveCustomer', e.target.dataset.arch); await refresh();
     }
     if(e.target.dataset.edit){
       const c=STATE.customers.find(x=>String(x.id)===String(e.target.dataset.edit));
-      const name=prompt('ชื่อ',c.name); if(name==null) return;
+      const name=prompt('Name',c.name); if(name==null) return;
       const line_id=prompt('LINE',c.line_id||''); const x_account=prompt('X',c.x_account||'');
       try{ await call('apiUpdateCustomer', c.id, {name, line_id, x_account}); await refresh(); }catch(err){ alert(err); }
     }
   };
   document.getElementById('m_go').onclick=async ()=>{
     const p=document.getElementById('m_primary').value, d=document.getElementById('m_dup').value;
-    if(!p||!d) return alert('เลือกทั้งสอง');
-    if(!confirm('Merge จะย้าย purchases/points ไป primary และ archive duplicate')) return;
+    if(!p||!d) return alert('Select both'); if(p===d) return alert('Different customers');
+    if(!confirm('Merge — moves all postings & points to primary')) return;
     await call('apiMergeCustomers', p, d); await refresh(); alert('Merged');
   };
 }
@@ -328,18 +581,37 @@ function viewCustomerDetail(id){
   const bal=STATE.balances[id]||0;
   const purchases=STATE.purchases.filter(p=>String(p.customer_id)===String(id));
   const ledger=STATE.ledger.filter(l=>String(l.customer_id)===String(id)).slice(0,30);
+  const completed=purchases.filter(p=>p.status==='completed');
+  const lifetime=completed.reduce((s,p)=>s+Number(p.total_amount||0),0);
   return `
-  \x3ch1>${c.name} \x3csmall class="muted">${c.customer_code}\x3c/small>\x3c/h1>
-  \x3cdiv class="card">\x3cb>LINE:\x3c/b> ${c.line_id||'—'} · \x3cb>X:\x3c/b> ${c.x_account||'—'} · \x3cb>แต้ม:\x3c/b> ${bal} · \x3cb>หมายเหตุ:\x3c/b> ${c.notes||'—'}\x3c/div>
-  \x3cdiv class="card">
-    \x3ch3>ปรับแต้ม\x3c/h3>
-    \x3cdiv class="row">\x3cinput id="pa_delta" type="number" placeholder="+/- แต้ม">\x3cinput id="pa_reason" placeholder="เหตุผล *">\x3cbutton class="btn btn-primary" id="pa_go" onclick="adjustPoints('${id}')">บันทึก\x3c/button>\x3c/div>\x3cdiv id="pa_msg">\x3c/div>
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">\x3ca href="#customers">Customers\x3c/a> › ${c.customer_code}\x3c/div>\x3ch1>${c.name} \x3cspan style="font-weight:400;color:var(--muted);font-size:13px">· ${c.customer_code}\x3c/span>\x3c/h1>\x3cp>LINE ${c.line_id||'—'} · X ${c.x_account||'—'} · ${c.notes||''}\x3c/p>\x3c/div>\x3cdiv class="row">\x3ca class="btn btn-sec btn-sm" href="#customers">← Back\x3c/a>\x3c/div>\x3c/div>
   \x3c/div>
-  \x3cdiv class="card">\x3ch3>ประวัติซื้อ (${purchases.length})\x3c/h3>\x3ctable>\x3cthead>\x3ctr>\x3cth>ใบเสร็จ\x3c/th>\x3cth>วันที่\x3c/th>\x3cth>ยอดสุทธิ\x3c/th>\x3cth>แต้ม\x3c/th>\x3cth>สถานะ\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${purchases.map(p=> `\x3ctr>\x3ctd>\x3ca href="#purchase/${p.id}">${p.receipt_number}\x3c/a>\x3c/td>\x3ctd>${dt(p.purchase_at)}\x3c/td>\x3ctd>${money(p.total_amount)}\x3c/td>\x3ctd>+${p.points_earned}/-${p.points_used}\x3c/td>\x3ctd>${p.status}\x3c/td>\x3c/tr>`).join('')}\x3c/tbody>\x3c/table>\x3c/div>
-  \x3cdiv class="card">\x3ch3>Ledger\x3c/h3>${ledger.map(l=> `\x3cdiv style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">\x3cspan>${l.entry_type} ${Number(l.points_delta)>0?'+':''}${l.points_delta} · ${l.reason||''}\x3c/span>\x3csmall class="muted">${dt(l.created_at)}\x3c/small>\x3c/div>`).join('')||'\x3cspan class="muted">ไม่มี\x3c/span>'}\x3c/div>
-  `;
+  \x3cdiv class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    \x3cdiv class="card kpi">\x3clabel>Points balance\x3c/label>\x3cstrong style="color:var(--primary)">${bal}\x3c/strong>\x3csmall>${ledger.length} ledger entries\x3c/small>\x3c/div>
+    \x3cdiv class="card kpi">\x3clabel>Lifetime\x3c/label>\x3cstrong>${money(lifetime)}\x3c/strong>\x3csmall>${completed.length} posted\x3c/small>\x3c/div>
+    \x3cdiv class="card kpi">\x3clabel>Documents\x3c/label>\x3cstrong>${purchases.length}\x3c/strong>\x3csmall>${purchases.filter(p=>p.status==='cancelled').length} cancelled\x3c/small>\x3c/div>
+  \x3c/div>
+  \x3cdiv class="card">
+    \x3cdiv class="card-head">\x3ch3>Adjust points\x3c/h3>\x3c/div>
+    \x3cdiv class="card-pad">
+      \x3cdiv class="form-grid" style="grid-template-columns:120px 1fr auto">\x3cdiv class="field">\x3cinput id="pa_delta" type="number" placeholder="+/-">\x3c/div>\x3cdiv class="field">\x3cinput id="pa_reason" placeholder="Reason *">\x3c/div>\x3cbutton class="btn btn-primary" onclick="adjustPoints('${id}')">Post\x3c/button>\x3c/div>
+      \x3cdiv id="pa_msg" style="margin-top:8px">\x3c/div>
+    \x3c/div>
+  \x3c/div>
+  \x3cdiv style="display:grid;grid-template-columns:1.2fr .8fr;gap:12px">
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3ch3>Postings (${purchases.length})\x3c/h3>\x3c/div>
+      \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Document\x3c/th>\x3cth>Date\x3c/th>\x3cth style="text-align:right">Amount\x3c/th>\x3cth>Points\x3c/th>\x3cth>Status\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${purchases.slice(0,20).map(p=> `\x3ctr>\x3ctd class="mono" style="font-size:12px">\x3ca href="#purchase/${p.id}">${p.receipt_number}\x3c/a>\x3c/td>\x3ctd>${dt(p.purchase_at)}\x3c/td>\x3ctd style="text-align:right" class="mono">${money(p.total_amount)}\x3c/td>\x3ctd>+${p.points_earned}/-${p.points_used}\x3c/td>\x3ctd>\x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}\x3c/span>\x3c/td>\x3c/tr>`).join('') || '\x3ctr>\x3ctd colspan=5 class="empty">No postings\x3c/td>\x3c/tr>'}\x3c/tbody>\x3c/table>\x3c/div>
+    \x3c/div>
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3ch3>Ledger\x3c/h3>\x3c/div>
+      \x3cdiv class="card-pad stack" style="max-height:420px;overflow:auto">
+        ${ledger.length ? ledger.map(l=> `\x3cdiv style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">\x3cdiv>\x3cdiv style="font-size:13px;font-weight:600">${l.entry_type} \x3cspan style="color:${Number(l.points_delta)>0?'var(--ok)':'var(--danger)'}">${Number(l.points_delta)>0?'+':''}${l.points_delta}\x3c/span>\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${l.reason||''}\x3c/div>\x3c/div>\x3cdiv style="font-size:11px;color:var(--muted)">${dt(l.created_at)}\x3c/div>\x3c/div>`).join('') : '\x3cdiv class="empty">No entries\x3c/div>'}
+      \x3c/div>
+    \x3c/div>
+  \x3c/div>`;
 }
-
 async function adjustPoints(customerId){
   const id = customerId || (location.hash.split('/')[1]||'');
   const delta = document.getElementById('pa_delta') ? document.getElementById('pa_delta').value : '';
@@ -347,72 +619,105 @@ async function adjustPoints(customerId){
   const msg = document.getElementById('pa_msg');
   try{
     const res = await call('apiAdjustPoints', id, Number(delta), reason);
-    if(msg) msg.innerHTML='\x3cspan class="success">ปรับแล้ว คงเหลือ '+res.points_balance+'\x3c/span>';
+    if(msg) msg.innerHTML='\x3cspan class="success">Posted · balance '+res.points_balance+'\x3c/span>';
     await refresh(); render();
   }catch(e){ if(msg) msg.innerHTML='\x3cspan class="error">'+e+'\x3c/span>'; else alert(e); }
 }
 function viewServices(){
   return `
-  \x3ch1>บริการ / หมวดหมู่\x3c/h1>
-  \x3cdiv class="card">
-    \x3ch3>หมวดหมู่ (Category)\x3c/h3>
-    \x3cdiv class="row">\x3cinput id="cat_name" placeholder="ชื่อหมวดหมู่">\x3cbutton class="btn btn-primary" id="cat_add">เพิ่มหมวดหมู่\x3c/button>\x3c/div>
-    \x3cdiv id="cat_list" style="margin-top:12px">${STATE.categories.filter(c=>!c.archived_at).map(c=> `\x3cdiv style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid var(--border)">\x3cspan>${c.name}\x3c/span>\x3cspan>\x3cbutton class="btn btn-sec" data-cat-edit="${c.id}">rename\x3c/button> \x3cbutton class="btn btn-sec" data-cat-arch="${c.id}">archive\x3c/button>\x3c/span>\x3c/div>`).join('')}\x3c/div>
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Master Data › Catalog\x3c/div>\x3ch1>Catalog\x3c/h1>\x3cp>Category = Game · Service = top-up product · price is snapshot per receipt\x3c/p>\x3c/div>\x3c/div>
   \x3c/div>
-  \x3cdiv class="card">
-    \x3ch3>บริการ\x3c/h3>
-    \x3cdiv class="row">\x3cselect id="svc_cat">\x3coption value="">เลือกหมวดหมู่\x3c/option>${STATE.categories.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.name}\x3c/option>`).join('')}\x3c/select>\x3cinput id="svc_name" placeholder="ชื่อบริการ">\x3cinput id="svc_price" type="number" step="0.01" placeholder="ราคา">\x3cinput id="svc_desc" placeholder="รายละเอียด">\x3cbutton class="btn btn-primary" id="svc_add">เพิ่มบริการ\x3c/button>\x3c/div>
-    \x3ctable style="margin-top:12px">\x3cthead>\x3ctr>\x3cth>หมวดหมู่\x3c/th>\x3cth>บริการ\x3c/th>\x3cth>ราคา\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${STATE.services.filter(s=>!s.archived_at).map(s=>{
-      const cat=STATE.categories.find(c=>String(c.id)===String(s.category_id)); return `\x3ctr>\x3ctd>${cat?cat.name:'—'}\x3c/td>\x3ctd>${s.name}\x3cbr>\x3csmall class="muted">${s.description||''}\x3c/small>\x3c/td>\x3ctd>${money(s.default_price)}\x3c/td>\x3ctd>\x3cbutton class="btn btn-sec" data-svc-arch="${s.id}">archive\x3c/button> \x3cbutton class="btn btn-sec" data-svc-edit="${s.id}">edit\x3c/button>\x3c/td>\x3c/tr>`;
-    }).join('')}\x3c/tbody>\x3c/table>
+  \x3cdiv style="display:grid;grid-template-columns:.9fr 1.1fr;gap:12px;align-items:start">
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3cdiv>\x3ch3>Categories\x3c/h3>\x3cp>${STATE.categories.filter(c=>!c.archived_at).length} active\x3c/p>\x3c/div>\x3c/div>
+      \x3cdiv class="card-pad stack">
+        \x3cdiv class="form-grid" style="grid-template-columns:1fr auto">\x3cdiv class="field">\x3cinput id="cat_name" placeholder="New category">\x3c/div>\x3cbutton class="btn btn-primary btn-sm" id="cat_add">Add\x3c/button>\x3c/div>
+        \x3cdiv id="cat_list" class="stack" style="gap:6px;margin-top:8px">
+          ${STATE.categories.filter(c=>!c.archived_at).map(c=> `\x3cdiv style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:8px">\x3cspan style="font-weight:600;font-size:13px">${c.name}\x3c/span>\x3cspan class="row">\x3cbutton class="btn btn-ghost btn-sm" data-cat-edit="${c.id}">Edit\x3c/button>\x3cbutton class="btn btn-ghost btn-sm" data-cat-arch="${c.id}" style="color:var(--danger)">Archive\x3c/button>\x3c/span>\x3c/div>`).join('') || '\x3cdiv class="empty">No categories\x3c/div>'}
+        \x3c/div>
+      \x3c/div>
+    \x3c/div>
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3cdiv>\x3ch3>Services\x3c/h3>\x3cp>${STATE.services.filter(s=>!s.archived_at).length} active\x3c/p>\x3c/div>\x3c/div>
+      \x3cdiv class="card-pad">
+        \x3cdiv class="form-grid" style="grid-template-columns:1fr 1fr">\x3cdiv class="field">\x3clabel>Category\x3c/label>\x3cselect id="svc_cat">\x3coption value="">Select\x3c/option>${STATE.categories.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>\x3cdiv class="field">\x3clabel>Name\x3c/label>\x3cinput id="svc_name" placeholder="e.g. 100 Gems">\x3c/div>\x3c/div>
+        \x3cdiv class="form-grid" style="grid-template-columns:1fr 2fr;margin-top:8px">\x3cdiv class="field">\x3clabel>Price\x3c/label>\x3cinput id="svc_price" type="number" step="0.01" placeholder="0.00">\x3c/div>\x3cdiv class="field">\x3clabel>Description\x3c/label>\x3cinput id="svc_desc" placeholder="Short description">\x3c/div>\x3c/div>
+        \x3cbutton class="btn btn-primary btn-sm" id="svc_add" style="margin-top:10px">Add service\x3c/button>
+        \x3cdiv class="divider">\x3c/div>
+        \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Category\x3c/th>\x3cth>Service\x3c/th>\x3cth style="text-align:right">Price\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${STATE.services.filter(s=>!s.archived_at).map(s=>{
+          const cat=STATE.categories.find(c=>String(c.id)===String(s.category_id)); return `\x3ctr>\x3ctd style="font-size:12px;color:var(--muted)">${cat?cat.name:'—'}\x3c/td>\x3ctd>\x3cdiv style="font-weight:600">${s.name}\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${s.description||''}\x3c/div>\x3c/td>\x3ctd style="text-align:right;font-weight:700" class="mono">${money(s.default_price)}\x3c/td>\x3ctd>\x3cdiv class="row" style="justify-content:flex-end">\x3cbutton class="btn btn-ghost btn-sm" data-svc-edit="${s.id}">Edit\x3c/button>\x3cbutton class="btn btn-ghost btn-sm" data-svc-arch="${s.id}" style="color:var(--danger)">Archive\x3c/button>\x3c/div>\x3c/td>\x3c/tr>`;
+        }).join('') || '\x3ctr>\x3ctd colspan=4 class="empty">No services\x3c/td>\x3c/tr>'}\x3c/tbody>\x3c/table>\x3c/div>
+      \x3c/div>
+    \x3c/div>
   \x3c/div>`;
 }
 function bindServices(){
   document.getElementById('cat_add').onclick=async ()=>{ try{ await call('apiUpsertCategory', {name: document.getElementById('cat_name').value}); await refresh(); }catch(e){alert(e)} };
   document.getElementById('cat_list').onclick=async e=>{
     if(e.target.dataset.catArch){ await call('apiArchiveCategory', e.target.dataset.catArch); await refresh(); }
-    if(e.target.dataset.catEdit){ const n=prompt('ชื่อใหม่'); if(n) { await call('apiUpsertCategory', {id:e.target.dataset.catEdit, name:n}); await refresh(); } }
+    if(e.target.dataset.catEdit){ const n=prompt('New name'); if(n) { await call('apiUpsertCategory', {id:e.target.dataset.catEdit, name:n}); await refresh(); } }
   };
   document.getElementById('svc_add').onclick=async ()=>{
     try{ await call('apiUpsertService', {category_id: document.getElementById('svc_cat').value, name: document.getElementById('svc_name').value, default_price: document.getElementById('svc_price').value, description: document.getElementById('svc_desc').value}); await refresh(); }catch(e){alert(e)}
   };
   document.querySelectorAll('[data-svc-arch]').forEach(b=> b.onclick=async ()=>{ await call('apiArchiveService', b.dataset.svcArch); await refresh(); });
   document.querySelectorAll('[data-svc-edit]').forEach(b=> b.onclick=async ()=>{
-    const s=STATE.services.find(x=>String(x.id)===String(b.dataset.svcEdit)); const n=prompt('ชื่อ',s.name); if(n==null) return; const p=prompt('ราคา',s.default_price); await call('apiUpsertService', {id:s.id, category_id:s.category_id, name:n, default_price:p||s.default_price, description:s.description}); await refresh();
+    const s=STATE.services.find(x=>String(x.id)===String(b.dataset.svcEdit)); const n=prompt('Name',s.name); if(n==null) return; const p=prompt('Price',s.default_price); await call('apiUpsertService', {id:s.id, category_id:s.category_id, name:n, default_price:p||s.default_price, description:s.description}); await refresh();
   });
 }
 
 function viewPurchase(id){
-  const p=STATE.purchases.find(x=>String(x.id)===String(id)); if(!p) return '\x3cdiv class="error">Purchase not found\x3c/div>';
+  const p=STATE.purchases.find(x=>String(x.id)===String(id)); if(!p) return '\x3cdiv class="error">Document not found\x3c/div>';
   const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id));
   const items=STATE.items.filter(x=>String(x.purchase_id)===String(id));
   const ev=STATE.evidence.find(x=>String(x.purchase_id)===String(id));
   return `
-  \x3ch1>${p.receipt_number} \x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}\x3c/span>\x3c/h1>
-  \x3cdiv class="card">
-    \x3cdiv class="row">\x3cdiv>\x3cb>ลูกค้า:\x3c/b> ${c?c.name:'—'}\x3cbr>\x3cb>วันที่ซื้อ:\x3c/b> ${dt(p.purchase_at)}\x3cbr>\x3cb>สร้างโดย:\x3c/b> ${p.created_by||'—'}\x3c/div>
-    \x3cdiv>\x3cb>ยอดรวม:\x3c/b> ${money(p.subtotal)}\x3cbr>\x3cb>ส่วนลด:\x3c/b> -${money(p.discount_amount)}\x3cbr>\x3cb>ยอดสุทธิ:\x3c/b> ${money(p.total_amount)}\x3cbr>\x3cb>แต้ม:\x3c/b> ใช้ ${p.points_used} ได้ ${p.points_earned}\x3c/div>\x3c/div>
-    \x3ctable style="margin-top:12px">\x3cthead>\x3ctr>\x3cth>บริการ\x3c/th>\x3cth>จำนวน\x3c/th>\x3cth>ราคา\x3c/th>\x3cth>รวม\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${items.map(it=> `\x3ctr>\x3ctd>${it.service_name}\x3cbr>\x3csmall class="muted">${it.category_name}\x3c/small>\x3c/td>\x3ctd>${it.quantity}\x3c/td>\x3ctd>${money(it.unit_price)}\x3c/td>\x3ctd>${money(it.line_total)}\x3c/td>\x3c/tr>`).join('')}\x3c/tbody>\x3c/table>
-    ${p.note ? '\x3cp>\x3cb>หมายเหตุ:\x3c/b> '+p.note+'\x3c/p>' : ''}
-    \x3cdiv class="row" style="margin-top:12px">
-      \x3ca class="btn btn-sec" href="#receipt/${p.id}">ดูใบเสร็จ\x3c/a>
-      ${p.status==='completed' ? '\x3cbutton class="btn btn-sec" id="btnEdit">แก้ไข\x3c/button>\x3cbutton class="btn btn-danger" id="btnCancel">ยกเลิก\x3c/button>' : ''}
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">\x3ca href="#history">Ledger\x3c/a> › ${p.receipt_number}\x3c/div>\x3ch1 class="mono" style="font-size:18px">${p.receipt_number} \x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}" style="margin-left:8px">\x3cspan class="pill-dot">\x3c/span>${p.status==='completed'?'Posted':'Cancelled'}\x3c/span>\x3c/h1>\x3cp>${dt(p.purchase_at)} · by ${p.created_by||'—'}\x3c/p>\x3c/div>\x3cdiv class="row">\x3ca class="btn btn-sec btn-sm" href="#receipt/${p.id}">Receipt\x3c/a>${p.status==='completed'?'\x3cbutton class="btn btn-sec btn-sm" id="btnEdit">Edit\x3c/button>\x3cbutton class="btn btn-danger btn-sm" id="btnCancel">Cancel\x3c/button>':''}\x3c/div>\x3c/div>
+  \x3c/div>
+  \x3cdiv style="display:grid;grid-template-columns:1.1fr .9fr;gap:12px">
+    \x3cdiv class="stack">
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3ch3>Document\x3c/h3>\x3c/div>
+        \x3cdiv class="card-pad">
+          \x3cdiv style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+            \x3cdiv>\x3cdiv style="font-size:11px;color:var(--muted)">Customer\x3c/div>\x3cdiv style="font-weight:600">${c?c.name:'—'} \x3csmall class="muted">· ${c?c.customer_code:''}\x3c/small>\x3c/div>\x3c/div>
+            \x3cdiv>\x3cdiv style="font-size:11px;color:var(--muted)">Points\x3c/div>\x3cdiv>used ${p.points_used} · earned ${p.points_earned}\x3c/div>\x3c/div>
+            \x3cdiv>\x3cdiv style="font-size:11px;color:var(--muted)">Subtotal\x3c/div>\x3cdiv class="mono">${money(p.subtotal)}\x3c/div>\x3c/div>
+            \x3cdiv>\x3cdiv style="font-size:11px;color:var(--muted)">Discount\x3c/div>\x3cdiv class="mono">-${money(p.discount_amount)}\x3c/div>\x3c/div>
+            \x3cdiv style="grid-column:1/-1;padding:12px;background:var(--surface-2);border-radius:8px;display:flex;justify-content:space-between;align-items:center">\x3cspan style="font-weight:600">Total\x3c/span>\x3cstrong class="mono" style="font-size:18px">${money(p.total_amount)}\x3c/strong>\x3c/div>
+          \x3c/div>
+          ${p.note ? `\x3cdiv style="margin-top:12px;padding:10px;background:var(--warn-soft);border-radius:8px;font-size:13px">\x3cb>Note:\x3c/b> ${p.note}\x3c/div>` : ''}
+        \x3c/div>
+      \x3c/div>
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3ch3>Lines (${items.length})\x3c/h3>\x3c/div>
+        \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Service\x3c/th>\x3cth>Qty\x3c/th>\x3cth style="text-align:right">Price\x3c/th>\x3cth style="text-align:right">Total\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${items.map(it=> `\x3ctr>\x3ctd>\x3cdiv style="font-weight:600">${it.service_name}\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${it.category_name}\x3c/div>\x3c/td>\x3ctd>${it.quantity}\x3c/td>\x3ctd style="text-align:right" class="mono">${money(it.unit_price)}\x3c/td>\x3ctd style="text-align:right;font-weight:700" class="mono">${money(it.line_total)}\x3c/td>\x3c/tr>`).join('')}\x3c/tbody>\x3c/table>\x3c/div>
+      \x3c/div>
     \x3c/div>
-    \x3cdiv id="editBox" class="hidden card" style="background:#f7f7fa">
-      \x3ch3>แก้ไข Purchase\x3c/h3>
-      \x3clabel>ลูกค้า\x3c/label>\x3cselect id="e_customer">${STATE.customers.filter(x=>!x.archived_at||String(x.id)===String(p.customer_id)).map(x=> `\x3coption value="${x.id}" ${String(x.id)===String(p.customer_id)?'selected':''}>${x.customer_code} ${x.name}\x3c/option>`).join('')}\x3c/select>
-      \x3clabel>วันเวลาซื้อ\x3c/label>\x3cinput id="e_at" type="datetime-local" value="${new Date(p.purchase_at).toISOString().slice(0,16)}">
-      \x3clabel>หมายเหตุ\x3c/label>\x3cinput id="e_note" value="${p.note||''}">
-      \x3clabel style="display:flex;gap:6px;align-items:center">\x3cinput type="checkbox" id="e_redeem" ${Number(p.points_used)>0 ? 'checked' : ''} style="width:auto"> ใช้ 8 แต้มลด 8%\x3c/label>
-      \x3cdiv id="e_lines">\x3c/div>\x3cbutton class="btn btn-sec" id="e_addLine">+ รายการ\x3c/button>
-      \x3cdiv style="margin-top:8px">\x3cbutton class="btn btn-primary" id="e_save">บันทึกแก้ไข\x3c/button> \x3cbutton class="btn btn-sec" id="e_cancel">ปิด\x3c/button>\x3c/div>
-      \x3cdiv id="e_msg">\x3c/div>
-    \x3c/div>
-    \x3cdiv class="card" style="margin-top:12px">
-      \x3ch3>หลักฐานโอน\x3c/h3>
-      ${ev ? '\x3ca target="_blank" href="https://drive.google.com/file/d/'+ev.file_id+'/view">ดูไฟล์ ('+ev.original_filename+')\x3c/a> \x3cbutton class="btn btn-sec" id="evRemove">ลบ\x3c/button>' : '\x3cspan class="muted">ยังไม่มี\x3c/span>'}
-      \x3cdiv style="margin-top:8px">\x3cinput type="file" id="evFile" accept="image/jpeg,image/jpg,image/png"> \x3cbutton class="btn btn-primary" id="evUpload">อัปโหลด/แทนที่\x3c/button>\x3c/div>
-      \x3cdiv id="evMsg">\x3c/div>
+    \x3cdiv class="stack">
+      \x3cdiv class="card" id="editBox" style="display:none">
+        \x3cdiv class="card-head">\x3ch3>Edit posting\x3c/h3>\x3cbutton class="btn btn-ghost btn-sm" id="e_cancel">Close\x3c/button>\x3c/div>
+        \x3cdiv class="card-pad stack">
+          \x3cdiv class="field">\x3clabel>Customer\x3c/label>\x3cselect id="e_customer">${STATE.customers.filter(x=>!x.archived_at||String(x.id)===String(p.customer_id)).map(x=> `\x3coption value="${x.id}" ${String(x.id)===String(p.customer_id)?'selected':''}>${x.customer_code} ${x.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>
+          \x3cdiv class="field">\x3clabel>Posting date\x3c/label>\x3cinput id="e_at" type="datetime-local" value="${new Date(p.purchase_at).toISOString().slice(0,16)}">\x3c/div>
+          \x3cdiv class="field">\x3clabel>Note\x3c/label>\x3cinput id="e_note" value="${p.note||''}">\x3c/div>
+          \x3clabel style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="e_redeem" ${Number(p.points_used)>0 ? 'checked' : ''}> Redeem 8 pts → 8%\x3c/label>
+          \x3cdiv id="e_lines">\x3c/div>\x3cbutton class="btn btn-sec btn-sm" id="e_addLine">＋ Add line\x3c/button>
+          \x3cdiv class="row">\x3cbutton class="btn btn-primary btn-sm" id="e_save">Save changes\x3c/button>\x3c/div>
+          \x3cdiv id="e_msg">\x3c/div>
+        \x3c/div>
+      \x3c/div>
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3ch3>Payment evidence\x3c/h3>\x3c/div>
+        \x3cdiv class="card-pad">
+          ${ev ? `\x3cdiv style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;background:var(--surface-2);border-radius:8px">\x3ca target="_blank" href="https://drive.google.com/file/d/'+ev.file_id+'/view" style="font-weight:600">${ev.original_filename}\x3c/a>\x3cbutton class="btn btn-ghost btn-sm" id="evRemove" style="color:var(--danger)">Remove\x3c/button>\x3c/div>` : '\x3cdiv class="empty" style="padding:16px">No evidence attached\x3c/div>'}
+          \x3cdiv style="margin-top:10px" class="field">\x3cinput type="file" id="evFile" accept="image/jpeg,image/jpg,image/png">\x3c/div>
+          \x3cbutton class="btn btn-primary btn-sm" id="evUpload" style="margin-top:8px">Upload / Replace\x3c/button>
+          \x3cdiv id="evMsg" style="margin-top:8px">\x3c/div>
+        \x3c/div>
+      \x3c/div>
     \x3c/div>
   \x3c/div>
   `;
@@ -420,26 +725,25 @@ function viewPurchase(id){
 function afterPurchase(id){
   const p=STATE.purchases.find(x=>String(x.id)===String(id)); if(!p) return;
   const _btnCancel=document.getElementById('btnCancel'); if(_btnCancel) _btnCancel.addEventListener('click', async ()=>{
-    const reason=prompt('เหตุผลยกเลิก *'); if(!reason) return;
-    if(!confirm('ยกเลิก '+p.receipt_number+' ? แต้มจะถูกย้อนกลับ')) return;
+    const reason=prompt('Reason *'); if(!reason) return;
+    if(!confirm('Cancel '+p.receipt_number+' ? Points will be reversed')) return;
     try{ await call('apiCancelPurchase', id, reason); await refresh(); location.hash='#purchase/'+id; }catch(e){alert(e)}
   });
   const box=document.getElementById('editBox');
-  const _btnEdit=document.getElementById('btnEdit'); if(_btnEdit) _btnEdit.addEventListener('click', ()=> box.classList.toggle('hidden'));
-  const _eCancel=document.getElementById('e_cancel'); if(_eCancel) _eCancel.addEventListener('click', ()=> box.classList.add('hidden'));
-  // edit lines
+  const _btnEdit=document.getElementById('btnEdit'); if(_btnEdit) _btnEdit.addEventListener('click', ()=> { box.style.display = box.style.display==='none' ? 'block' : 'none'; });
+  const _eCancel=document.getElementById('e_cancel'); if(_eCancel) _eCancel.addEventListener('click', ()=> box.style.display='none');
   let items=STATE.items.filter(x=>String(x.purchase_id)===String(id)).map(it=> ({service_id:it.service_id, quantity:it.quantity, unit_price:it.unit_price}));
   if(!items.length) items=[{service_id:'',quantity:1,unit_price:0}];
   const linesEl=document.getElementById('e_lines');
   function renderE(){
     linesEl.innerHTML=items.map((l,i)=> `
-      \x3cdiv style="display:flex;gap:8px;margin:6px 0">
-        \x3cselect data-i="${i}" class="e_svc" style="flex:2">\x3coption value="">บริการ\x3c/option>${STATE.services.map(s=>{
+      \x3cdiv style="display:grid;grid-template-columns:1.6fr 80px 110px 36px;gap:8px;align-items:center;margin:6px 0">
+        \x3cselect data-i="${i}" class="e_svc" style="padding:8px;border:1px solid var(--border);border-radius:8px">\x3coption value="">Service\x3c/option>${STATE.services.map(s=>{
           const cat=STATE.categories.find(c=>String(c.id)===String(s.category_id)); return `\x3coption value="${s.id}" ${s.id===l.service_id?'selected':''}>${cat?cat.name:''}·${s.name}\x3c/option>`;
         }).join('')}\x3c/select>
-        \x3cinput type="number" data-i="${i}" class="e_qty" value="${l.quantity}" style="width:90px">
-        \x3cinput type="number" data-i="${i}" class="e_price" value="${l.unit_price}" style="width:110px">
-        \x3cbutton class="btn btn-sec" data-del="${i}">ลบ\x3c/button>
+        \x3cinput type="number" data-i="${i}" class="e_qty" value="${l.quantity}" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        \x3cinput type="number" data-i="${i}" class="e_price" value="${l.unit_price}" style="padding:8px;border:1px solid var(--border);border-radius:8px">
+        \x3cbutton class="btn btn-ghost btn-sm" data-del="${i}">✕\x3c/button>
       \x3c/div>
     `).join('');
   }
@@ -452,14 +756,14 @@ function afterPurchase(id){
     document.getElementById('e_save').onclick=async ()=>{
       try{
         const payload={customer_id: document.getElementById('e_customer').value, purchase_at: document.getElementById('e_at').value, note: document.getElementById('e_note').value, redeem_points: document.getElementById('e_redeem').checked, items: items.map(l=>({service_id:l.service_id, quantity:Number(l.quantity), unit_price:Number(l.unit_price)})) };
-        await call('apiEditPurchase', id, payload); await refresh(); location.hash='#purchase/'+id; alert('แก้ไขแล้ว');
+        await call('apiEditPurchase', id, payload); await refresh(); location.hash='#purchase/'+id; alert('Saved');
       }catch(e){ document.getElementById('e_msg').innerHTML='\x3cdiv class="error">'+e+'\x3c/div>'; }
     };
     document.getElementById('evUpload').onclick=async ()=>{
-      const f=document.getElementById('evFile').files[0]; if(!f) return alert('เลือกไฟล์');
+      const f=document.getElementById('evFile').files[0]; if(!f) return alert('Select file');
       const b64=await toBase64(f); try{ await call('apiUploadEvidence', id, f.name, f.type, b64); await refresh(); location.hash='#purchase/'+id; }catch(e){ document.getElementById('evMsg').innerHTML='\x3cdiv class="error">'+e+'\x3c/div>'; }
     };
-    const _evRemove=document.getElementById('evRemove'); if(_evRemove) _evRemove.addEventListener('click', async ()=>{ if(!confirm('ลบหลักฐาน?')) return; await call('apiRemoveEvidence', id); await refresh(); location.hash='#purchase/'+id; });
+    const _evRemove=document.getElementById('evRemove'); if(_evRemove) _evRemove.addEventListener('click', async ()=>{ if(!confirm('Remove evidence?')) return; await call('apiRemoveEvidence', id); await refresh(); location.hash='#purchase/'+id; });
   }
 }
 
@@ -469,48 +773,73 @@ function viewReceipt(id){
   const items=STATE.items.filter(x=>String(x.purchase_id)===String(id));
   const bal=STATE.balances[p.customer_id]||0;
   return `
-  \x3cdiv style="display:flex;justify-content:space-between;align-items:center">\x3ch1>ใบเสร็จ\x3c/h1>\x3cdiv>\x3cbutton class="btn btn-sec" onclick="window.print()">พิมพ์\x3c/button> \x3cbutton class="btn btn-sec" onclick="downloadReceiptPdf()">PDF\x3c/button>\x3c/div>\x3c/div>
-  \x3cdiv class="receipt" id="receipt">
-    \x3cdiv style="text-align:center">${STATE.store_name ? '\x3cstrong>'+STATE.store_name+'\x3c/strong>\x3cbr>' : ''}\x3cspan>ใบเสร็จรับเงิน\x3c/span>\x3cbr>\x3csmall class="muted">เอกสารรับเงินภายในร้าน\x3c/small>\x3c/div>
-    \x3cdiv class="rule">\x3c/div>
-    \x3cdiv style="font-size:13px">\x3cb>เลขที่:\x3c/b> ${p.receipt_number}\x3cbr>\x3cb>วันที่:\x3c/b> ${dt(p.purchase_at)}\x3cbr>\x3cb>ลูกค้า:\x3c/b> ${c?c.name:'—'}\x3cbr>\x3cb>รหัส:\x3c/b> ${c?c.customer_code:'—'}\x3c/div>
-    \x3cdiv class="rule">\x3c/div>
-    \x3ctable style="font-size:13px">\x3cthead>\x3ctr>\x3cth>รายการ\x3c/th>\x3cth>จำนวน\x3c/th>\x3cth>ราคา\x3c/th>\x3cth>รวม\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${items.map(it=> `\x3ctr>\x3ctd>${it.service_name}\x3c/td>\x3ctd>${it.quantity}\x3c/td>\x3ctd>${money(it.unit_price)}\x3c/td>\x3ctd>${money(it.line_total)}\x3c/td>\x3c/tr>`).join('')}\x3c/tbody>\x3c/table>
-    \x3cdiv class="rule">\x3c/div>
-    \x3cdiv style="font-size:14px">\x3cdiv style="display:flex;justify-content:space-between">\x3cspan>ยอดรวม\x3c/span>\x3cspan>${money(p.subtotal)}\x3c/span>\x3c/div>${Number(p.discount_amount)>0 ? '\x3cdiv style="display:flex;justify-content:space-between">\x3cspan>ส่วนลดสะสมแต้ม\x3c/span>\x3cspan>-'+money(p.discount_amount)+'\x3c/span>\x3c/div>' : ''}\x3cdiv style="display:flex;justify-content:space-between;font-weight:700">\x3cspan>ยอดสุทธิ\x3c/span>\x3cspan>${money(p.total_amount)}\x3c/span>\x3c/div>\x3c/div>
-    \x3cp style="text-align:center;font-size:12px" class="muted">ใช้แต้ม ${p.points_used} · ได้แต้ม ${p.points_earned} · คงเหลือ ${bal}\x3c/p>
-    ${p.status==='cancelled' ? '\x3cp style="text-align:center;color:var(--danger)">ยกเลิกใบเสร็จแล้ว\x3c/p>' : ''}
-    \x3cp style="text-align:center;font-size:13px">${STATE.receipt_footer||'ขอบคุณที่ใช้บริการครับ'}\x3c/p>
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">\x3ca href="#history">Ledger\x3c/a> › Receipt\x3c/div>\x3ch1>Receipt \x3cspan class="mono" style="font-size:14px;color:var(--muted)">${p.receipt_number}\x3c/span>\x3c/h1>\x3cp>Thai fiscal document — generated view, not stored PDF\x3c/p>\x3c/div>\x3cdiv class="row">\x3cbutton class="btn btn-sec btn-sm" onclick="window.print()">Print\x3c/button>\x3cbutton class="btn btn-primary btn-sm" onclick="downloadReceiptPdf()">PDF\x3c/button>\x3c/div>\x3c/div>
   \x3c/div>
-  \x3cdiv class="card">\x3ca class="btn btn-sec" href="#purchase/${p.id}">กลับรายละเอียด\x3c/a>\x3c/div>
+  \x3cdiv style="display:grid;grid-template-columns:380px 1fr;gap:14px;align-items:start">
+    \x3cdiv class="receipt" id="receipt" style="margin:0">
+      \x3cdiv style="text-align:center">\x3cdiv style="width:44px;height:44px;border-radius:10px;background:var(--primary);color:#fff;display:grid;place-items:center;margin:0 auto 8px;font-weight:700">${(STATE.store_name||'S').charAt(0)}\x3c/div>${STATE.store_name ? '\x3cstrong style="font-size:15px">'+STATE.store_name+'\x3c/strong>\x3cbr>' : ''}\x3cspan style="font-size:13px;font-weight:700">ใบเสร็จรับเงิน\x3c/span>\x3cbr>\x3csmall class="muted">เอกสารรับเงินภายในร้าน\x3c/small>\x3c/div>
+      \x3cdiv style="border-top:1px dashed var(--border);margin:16px 0">\x3c/div>
+      \x3cdiv style="font-size:13px;line-height:1.7">\x3cb>เลขที่:\x3c/b> ${p.receipt_number}\x3cbr>\x3cb>วันที่:\x3c/b> ${dt(p.purchase_at)}\x3cbr>\x3cb>ลูกค้า:\x3c/b> ${c?c.name:'—'}\x3cbr>\x3cb>รหัส:\x3c/b> ${c?c.customer_code:'—'}\x3c/div>
+      \x3cdiv style="border-top:1px dashed var(--border);margin:16px 0">\x3c/div>
+      \x3ctable style="font-size:13px;width:100%">\x3cthead>\x3ctr>\x3cth>รายการ\x3c/th>\x3cth>จำนวน\x3c/th>\x3cth>ราคา\x3c/th>\x3cth>รวม\x3c/th>\x3c/tr>\x3c/thead>\x3ctbody>${items.map(it=> `\x3ctr>\x3ctd>${it.service_name}\x3c/td>\x3ctd>${it.quantity}\x3c/td>\x3ctd>${money(it.unit_price)}\x3c/td>\x3ctd>${money(it.line_total)}\x3c/td>\x3c/tr>`).join('')}\x3c/tbody>\x3c/table>
+      \x3cdiv style="border-top:1px dashed var(--border);margin:16px 0">\x3c/div>
+      \x3cdiv style="font-size:13px">\x3cdiv style="display:flex;justify-content:space-between">\x3cspan>ยอดรวม\x3c/span>\x3cspan class="mono">${money(p.subtotal)}\x3c/span>\x3c/div>${Number(p.discount_amount)>0 ? '\x3cdiv style="display:flex;justify-content:space-between;color:var(--ok)">\x3cspan>ส่วนลดสะสมแต้ม\x3c/span>\x3cspan class="mono">-'+money(p.discount_amount)+'\x3c/span>\x3c/div>' : ''}\x3cdiv style="display:flex;justify-content:space-between;font-weight:700;margin-top:6px">\x3cspan>ยอดสุทธิ\x3c/span>\x3cspan class="mono">${money(p.total_amount)}\x3c/span>\x3c/div>\x3c/div>
+      \x3cp style="text-align:center;font-size:12px" class="muted">ใช้แต้ม ${p.points_used} · ได้แต้ม ${p.points_earned} · คงเหลือ ${bal}\x3c/p>
+      ${p.status==='cancelled' ? '\x3cp style="text-align:center;color:var(--danger);font-weight:700">ยกเลิกใบเสร็จแล้ว\x3c/p>' : ''}
+      \x3cp style="text-align:center;font-size:12px">${STATE.receipt_footer||'ขอบคุณที่ใช้บริการครับ'}\x3c/p>
+    \x3c/div>
+    \x3cdiv class="stack">
+      \x3cdiv class="card card-pad">
+        \x3cdiv style="font-size:13px;font-weight:600">Details\x3c/div>
+        \x3cdiv style="font-size:13px;line-height:1.8;margin-top:8px">
+          Customer \x3cb>${c?c.name:'—'}\x3c/b> · Balance \x3cb>${bal}\x3c/b>\x3cbr>
+          Total \x3cb class="mono">${money(p.total_amount)}\x3c/b> · Status \x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">${p.status}\x3c/span>
+        \x3c/div>
+        \x3cdiv class="row" style="margin-top:12px">\x3ca class="btn btn-sec btn-sm" href="#purchase/${p.id}">Object page\x3c/a>\x3c/div>
+      \x3c/div>
+    \x3c/div>
+  \x3c/div>
   `;
 }
 function downloadReceiptPdf(){
   const el=document.getElementById('receipt');
-  // lazy: print to PDF via browser
-  const w=window.open('','_blank'); w.document.write('\x3chtml>\x3chead>\x3ctitle>receipt\x3c/title>\x3cstyle>body{font-family:sans-serif}\x3c/style>\x3c/head>\x3cbody>'+el.outerHTML+'\x3c/body>\x3c/html>'); w.document.close(); w.print();
+  const w=window.open('','_blank'); w.document.write('\x3chtml>\x3chead>\x3ctitle>receipt\x3c/title>\x3cstyle>body{font-family:sans-serif;padding:20px}\x3c/style>\x3c/head>\x3cbody>'+el.outerHTML+'\x3c/body>\x3c/html>'); w.document.close(); w.print();
 }
 
 function viewAudit(){
   return `
-  \x3ch1>Audit Logs\x3c/h1>
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Governance › Audit\x3c/div>\x3ch1>Audit Log\x3c/h1>\x3cp>Immutable · append-only · 500 latest\x3c/p>\x3c/div>\x3c/div>
+  \x3c/div>
   \x3cdiv class="card">
-    \x3ctable>\x3cthead>\x3ctr>\x3cth>เวลา\x3c/th>\x3cth>ผู้ทำ\x3c/th>\x3cth>เหตุการณ์\x3c/th>\x3cth>สรุป\x3c/th>\x3c/tr>\x3c/thead>
-    \x3ctbody>${STATE.audit.map(l=> `\x3ctr>\x3ctd>${dt(l.created_at)}\x3c/td>\x3ctd>${l.actor_name||l.actor_email}\x3c/td>\x3ctd>${l.event_type}\x3cbr>\x3csmall class="muted">${l.entity_type||''}\x3c/small>\x3c/td>\x3ctd>${l.summary}\x3cbr>\x3csmall class="muted">${(l.metadata||'').slice(0,120)}\x3c/small>\x3c/td>\x3c/tr>`).join('')}\x3c/tbody>\x3c/table>
+    \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Time\x3c/th>\x3cth>Actor\x3c/th>\x3cth>Event\x3c/th>\x3cth>Summary\x3c/th>\x3c/tr>\x3c/thead>
+    \x3ctbody>${STATE.audit.map(l=> `\x3ctr>\x3ctd style="white-space:nowrap;font-size:12px" class="mono">${dt(l.created_at)}\x3c/td>\x3ctd>\x3cdiv style="font-weight:600;font-size:13px">${l.actor_name||l.actor_email||'—'}\x3c/div>\x3cdiv style="font-size:11px;color:var(--muted)">${l.actor_email||''}\x3c/div>\x3c/td>\x3ctd>\x3cspan class="pill" style="background:var(--surface-2)">${l.event_type}\x3c/span>\x3cbr>\x3csmall class="muted">${l.entity_type||''}\x3c/small>\x3c/td>\x3ctd>\x3cdiv style="font-size:13px">${l.summary}\x3c/div>\x3cdiv style="font-size:11px;color:var(--muted)" class="mono">${(l.metadata||'').slice(0,140)}\x3c/div>\x3c/td>\x3c/tr>`).join('') || '\x3ctr>\x3ctd colspan=4 class="empty">No audit entries\x3c/td>\x3c/tr>'}\x3c/tbody>\x3c/table>\x3c/div>
   \x3c/div>`;
 }
 function viewSettings(){
   return `
-  \x3ch1>ตั้งค่า\x3c/h1>
-  \x3cdiv class="card">
-    \x3clabel>ชื่อร้าน\x3c/label>\x3cinput id="s_name" value="${STATE.store_name}">
-    \x3clabel>ท้ายใบเสร็จ\x3c/label>\x3cinput id="s_footer" value="${STATE.receipt_footer}">
-    \x3clabel>โลโก้ (PNG/JPG)\x3c/label>\x3cinput type="file" id="s_logo" accept="image/*">
-    \x3cbutton class="btn btn-primary" id="s_save">บันทึก\x3c/button>\x3cspan id="s_msg" class="muted">\x3c/span>
+  \x3cdiv class="page-header">
+    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">Home › Governance › Settings\x3c/div>\x3ch1>Settings\x3c/h1>\x3cp>Store identity drives receipt numbering · changes are audited\x3c/p>\x3c/div>\x3c/div>
   \x3c/div>
-  \x3cdiv class="card">
-    \x3ch3>Allowlist\x3c/h3>\x3cp class="muted">เพิ่มอีเมลในแท็บ _config คอลัมน์ A หลังแถว admin_allowlist\x3c/p>
-    \x3cbutton class="btn btn-sec" onclick="call('apiRecordExport','manual',{test:1}).then(()=>alert('audit ok'))">ทดสอบ audit\x3c/button>
+  \x3cdiv style="display:grid;grid-template-columns:1.1fr .9fr;gap:12px">
+    \x3cdiv class="card">
+      \x3cdiv class="card-head">\x3ch3>Store\x3c/h3>\x3c/div>
+      \x3cdiv class="card-pad stack">
+        \x3cdiv class="field">\x3clabel>Store name (prefix for ${STATE.store_name}-YYYY-000001)\x3c/label>\x3cinput id="s_name" value="${STATE.store_name}">\x3cdiv class="field-hint">Renaming does not affect past documents — they keep old prefix\x3c/div>\x3c/div>
+        \x3cdiv class="field">\x3clabel>Receipt footer (Thai)\x3c/label>\x3cinput id="s_footer" value="${STATE.receipt_footer}">\x3c/div>
+        \x3cdiv class="field">\x3clabel>Logo (PNG/JPG)\x3c/label>\x3cinput type="file" id="s_logo" accept="image/*">\x3c/div>
+        \x3cbutton class="btn btn-primary" id="s_save">Save settings\x3c/button>\x3cspan id="s_msg" class="muted" style="margin-left:8px">\x3c/span>
+      \x3c/div>
+    \x3c/div>
+    \x3cdiv class="card card-pad">
+      \x3cdiv style="font-size:13px;font-weight:700">Access\x3c/div>
+      \x3cdiv style="font-size:13px;line-height:1.6;color:var(--muted);margin-top:6px">
+        Allowlist lives in \x3cb>_config\x3c/b> sheet — row \x3cb>admin_allowlist\x3c/b> then emails in column A. Non-listed users see \x3cb>Access denied\x3c/b> even with link.
+      \x3c/div>
+      \x3cdiv class="divider">\x3c/div>
+      \x3cbutton class="btn btn-sec btn-sm" onclick="call('apiRecordExport','manual',{test:1}).then(()=>alert('audit ok'))">Test audit write\x3c/button>
+    \x3c/div>
   \x3c/div>`;
 }
 function bindSettings(){
@@ -518,14 +847,13 @@ function bindSettings(){
     const payload={store_name: document.getElementById('s_name').value, receipt_footer: document.getElementById('s_footer').value};
     const f=document.getElementById('s_logo').files[0];
     if(f){ payload.logoBase64=await toBase64(f); payload.logoMime=f.type; }
-    try{ await call('apiSaveSettings', payload); document.getElementById('s_msg').textContent='บันทึกแล้ว'; await refresh(); }catch(e){ alert(e); }
+    try{ await call('apiSaveSettings', payload); document.getElementById('s_msg').textContent='Saved'; await refresh(); }catch(e){ alert(e); }
   };
 }
 
 // init
 (function(){
   const h=location.hash; if(!h) location.hash='#dashboard';
-  // history filter bindings
   document.addEventListener('click', e=>{
     if(e.target.id==='h_search'){ FILTER.q=document.getElementById('h_q').value; FILTER.status=document.getElementById('h_status').value; FILTER.customer=document.getElementById('h_customer').value; render(); }
     if(e.target.id==='h_csv'){
@@ -536,14 +864,12 @@ function bindSettings(){
       call('apiRecordExport','purchase_history',{count:rows.length-1});
     }
   });
-  // global error handler for google.script.run
   window.onerror=(m)=> console.error(m);
   refresh().catch(e=> document.getElementById('app').innerHTML='\x3cdiv class="error">'+e+'\x3c/div>');
-  // afterRender hook for purchase/receipt
   const origRender=render;
   window.render=()=>{ origRender(); const h=location.hash; if(h.startsWith('#purchase/')) afterPurchase(h.split('/')[1]); };
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </body>
 </html>

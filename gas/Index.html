@@ -101,7 +101,9 @@
   .btn:active{transform:translateY(1px)}
   .field{display:flex;flex-direction:column;gap:6px}
   .field label{font-size:12px;font-weight:600;color:var(--text)}
-  .field input,.field select,.field textarea{padding:8px 11px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:13px}
+  .field input,.field select,.field textarea{padding:8px 11px;border:1px solid var(--border);border-radius:4px;background:#fff;font-size:13px;line-height:1.4}
+  .field input,.field select{height:36px}
+  .field textarea{min-height:72px;resize:vertical}
   .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
   .field-hint{font-size:11px;color:var(--muted)}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}

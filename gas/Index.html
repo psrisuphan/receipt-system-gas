@@ -218,6 +218,8 @@ let FILTER={q:'', status:'', customer:''};
 
 function money(n){ return new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB'}).format(Number(n||0)); }
 function dt(iso){ try{ return new Date(iso).toLocaleString('th-TH',{timeZone:'Asia/Bangkok', dateStyle:'medium', timeStyle:'short'});}catch(e){return iso} }
+function localDateTime(iso){ const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(iso)).reduce((o,p)=>(o[p.type]=p.value,o),{}); return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`; }
+function updateClock(){ const el=document.getElementById('clock'); if(el) el.textContent=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date()); }
 function call(name, ...args){
   return new Promise((res,rej)=>{
     google.script.run.withSuccessHandler(res).withFailureHandler(e=>rej(e.message||String(e)))[name](...args);
@@ -282,7 +284,9 @@ function viewDashboard(){
   const cancelled=STATE.purchases.filter(p=>p.status==='cancelled');
   const total=completed.reduce((s,p)=>s+Number(p.total_amount||0),0);
   const avg = completed.length ? total/completed.length : 0;
-  const mTotal = completed.filter(p=> new Date(p.purchase_at).getMonth()===new Date().getMonth()).reduce((s,p)=>s+Number(p.total_amount||0),0);
+  const now=new Date();
+  const thisMonth=localDateTime(now.toISOString()).slice(0,7);
+  const mTotal = completed.filter(p=>localDateTime(p.purchase_at).slice(0,7)===thisMonth).reduce((s,p)=>s+Number(p.total_amount||0),0);
   const pointsIssued=STATE.ledger.filter(l=>Number(l.points_delta)>0).reduce((s,l)=>s+Number(l.points_delta),0);
   const pointsRedeemed=Math.abs(STATE.ledger.filter(l=>Number(l.points_delta)<0).reduce((s,l)=>s+Number(l.points_delta),0));
   const byCat={}; STATE.items.forEach(it=>{
@@ -302,12 +306,40 @@ function viewDashboard(){
     \x3c/div>
   \x3c/div>
   \x3cdiv class="kpi-grid">
-    \x3cdiv class="card kpi active">\x3cdiv class="kpi-head">\x3clabel>Total Sales\x3c/label>\x3cspan class="kpi-icon primary">◈\x3c/span>\x3c/div>\x3cstrong>${money(total)}\x3c/strong>\x3cdiv class="row" style="justify-content:space-between">\x3csmall>${completed.length} posted · avg ${money(avg)}\x3c/small>\x3cspan class="trend up">↗ ${mTotal?'+'+Math.round(mTotal/total*100)+'% MTD':''}\x3c/span>\x3c/div>\x3c/div>
-    \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Postings\x3c/label>\x3cspan class="kpi-icon muted">≡\x3c/span>\x3c/div>\x3cstrong>${completed.length + cancelled.length}\x3c/strong>\x3csmall>\x3cspan style="color:var(--ok);font-weight:600">${completed.length} completed\x3c/span> · \x3cspan style="color:var(--danger)">${cancelled.length} cancelled\x3c/span>\x3c/small>\x3c/div>
-    \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Customers\x3c/label>\x3cspan class="kpi-icon ok">◯\x3c/span>\x3c/div>\x3cstrong>${STATE.customers.filter(c=>!c.archived_at).length}\x3c/strong>\x3csmall>${STATE.services.filter(s=>!s.archived_at).length} active services · ${STATE.categories.filter(c=>!c.archived_at).length} categories\x3c/small>\x3c/div>
-    \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Loyalty Net\x3c/label>\x3cspan class="kpi-icon warn">◆\x3c/span>\x3c/div>\x3cstrong>${pointsIssued - pointsRedeemed}\x3c/strong>\x3csmall>issued ${pointsIssued} · redeemed ${pointsRedeemed}\x3c/small>\x3c/div>
+     \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Total sales\x3c/label>\x3c/div>\x3cstrong>${money(total)}\x3c/strong>\x3cdiv class="row" style="justify-content:space-between">\x3csmall>${completed.length} posted · avg ${money(avg)}\x3c/small>\x3cspan class="muted" style="font-size:11px">${money(mTotal)} this month\x3c/span>\x3c/div>\x3c/div>
+     \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Receipts\x3c/label>\x3c/div>\x3cstrong>${completed.length + cancelled.length}\x3c/strong>\x3csmall>\x3cspan style="color:var(--ok);font-weight:600">${completed.length} posted\x3c/span> · \x3cspan style="color:var(--danger)">${cancelled.length} cancelled\x3c/span>\x3c/small>\x3c/div>
+     \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Customers\x3c/label>\x3c/div>\x3cstrong>${STATE.customers.filter(c=>!c.archived_at).length}\x3c/strong>\x3csmall>${STATE.services.filter(s=>!s.archived_at).length} active services · ${STATE.categories.filter(c=>!c.archived_at).length} categories\x3c/small>\x3c/div>
+     \x3cdiv class="card kpi">\x3cdiv class="kpi-head">\x3clabel>Points balance\x3c/label>\x3c/div>\x3cstrong>${pointsIssued - pointsRedeemed}\x3c/strong>\x3csmall>issued ${pointsIssued} · redeemed ${pointsRedeemed}\x3c/small>\x3c/div>
   \x3c/div>
-  \x3cdiv style="display:grid;grid-template-columns:1.7fr .9fr;gap:12px;margin-bottom:12px">
+  \x3cdiv class="dashboard-grid">
+    \x3cdiv>
+      \x3cdiv class="section-eyebrow">Sales by month\x3c/div>
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3cdiv>\x3ch3>Sales by month\x3c/h3>\x3cp>Posted receipts · THB\x3c/p>\x3c/div>\x3cspan class="muted" style="font-size:11px">Asia/Bangkok\x3c/span>\x3c/div>
+      \x3cdiv class="chart-area">\x3ccanvas id="salesChart">\x3c/canvas>      \x3c/div>
+      \x3c/div>
+    \x3c/div>
+    \x3cdiv>
+      \x3cdiv class="section-eyebrow">Sales by category\x3c/div>
+      \x3cdiv class="card">
+        \x3cdiv class="card-head">\x3cdiv>\x3ch3>Sales by category\x3c/h3>\x3cp>Posted line totals\x3c/p>\x3c/div>\x3c/div>
+      \x3cdiv class="card-pad">
+        ${topCats.length ? `\x3cdiv style="height:200px">\x3ccanvas id="categoryChart">\x3c/canvas>\x3c/div>
+        \x3cdiv class="category-list" style="margin-top:14px">
+          ${topCats.map(([name,val],i)=>`
+            \x3cdiv class="category-row">
+              \x3cdiv class="category-label">\x3cspan style="display:flex;align-items:center;gap:8px">\x3cspan style="width:8px;height:8px;border-radius:50%;background:${['#267565','#c78956','#287a57','#99621a'][i%4]}">\x3c/span>\x3cstrong>${name}\x3c/strong>\x3c/span>\x3cspan>${money(val)}\x3c/span>\x3c/div>
+            \x3c/div>
+          `).join('')}
+        \x3c/div>` : '\x3cdiv class="empty">No posted sales yet.\x3c/div>'}
+         \x3cdiv class="divider">\x3c/div>
+          \x3cdiv class="control-note">\x3cstrong>Controls\x3c/strong>\x3cspan>Immutable receipts · audited edits · retained cancellations.\x3c/span>\x3c/div>
+        \x3c/div>
+      \x3c/div>
+    \x3c/div>
+  \x3c/div>
+  \x3cdiv>
+    \x3cdiv class="section-eyebrow">Recent receipts\x3c/div>
     \x3cdiv class="card">
         \x3cdiv class="card-head">\x3cdiv>\x3ch3>Recent receipts\x3c/h3>\x3cp>Latest 8 receipts\x3c/p>\x3c/div>\x3ca class="btn btn-ghost btn-sm" href="#history">View all\x3c/a>\x3c/div>
      \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Receipt\x3c/th>\x3cth>Customer\x3c/th>\x3cth>Date\x3c/th>\x3cth style="text-align:right">Amount\x3c/th>\x3cth>Status\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>
@@ -320,17 +352,28 @@ function viewDashboard(){
 }
 function bindDashboard(){
   const completed=STATE.purchases.filter(p=>p.status==='completed');
-  const byMonth={}; completed.forEach(p=>{ const k=new Date(p.purchase_at).toISOString().slice(0,7); byMonth[k]=(byMonth[k]||0)+Number(p.total_amount||0); });
+  const byMonth={}; completed.forEach(p=>{ const k=localDateTime(p.purchase_at).slice(0,7); byMonth[k]=(byMonth[k]||0)+Number(p.total_amount||0); });
   const months=Object.keys(byMonth).sort().slice(-6);
   const values=months.map(m=>byMonth[m]);
-  if(typeof Chart !== 'undefined' && months.length){
-    new Chart(canvas, {
-      type:'bar',
-      data:{ labels: months, datasets:[
-        { label:'Posted', data: values, backgroundColor:'#0f62fe', borderRadius:6, barPercentage:0.5 },
-        { label:'Avg', data: months.map(()=> values.length? values.reduce((a,b)=>a+b,0)/values.length : 0), type:'line', borderColor:'#94a3b8', borderDash:[4,4], pointRadius:0, tension:.3 }
-      ]},
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:true, position:'bottom', labels:{boxWidth:12, font:{size:11}}} }, scales:{ y:{ beginAtZero:true, grid:{color:'#f1f5f9'} }, x:{ grid:{display:false} } } }
+  const canvas=document.getElementById('salesChart');
+  if(canvas){
+    if(typeof Chart !== 'undefined' && months.length){
+      new Chart(canvas, {
+        type:'bar',
+         data:{ labels: months, datasets:[
+           { label:'Posted sales', data: values, backgroundColor:'#267565', borderRadius:2, barPercentage:0.45 }
+         ]},
+         options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, grid:{color:'#edf0f3'} }, x:{ grid:{display:false} } } }
+      });
+    } else if(!months.length) {
+      canvas.outerHTML = '\x3cdiv class="chart-empty">No posted sales yet.\x3c/div>';
+    }
+  }
+  const catCanvas=document.getElementById('categoryChart');
+  if(catCanvas){
+    const byCat={}; STATE.items.forEach(it=>{
+      const pur=STATE.purchases.find(x=>String(x.id)===String(it.purchase_id) && x.status==='completed');
+      if(!pur) return; byCat[it.category_name]=(byCat[it.category_name]||0)+Number(it.line_total||0);
     });
     const topCats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,4);
     if(typeof Chart !== 'undefined' && topCats.length){
@@ -741,7 +784,7 @@ function viewPurchase(id){
          \x3cdiv class="card-head">\x3ch3>Edit receipt\x3c/h3>\x3cbutton class="btn btn-ghost btn-sm" id="e_cancel">Close\x3c/button>\x3c/div>
         \x3cdiv class="card-pad stack">
           \x3cdiv class="field">\x3clabel>Customer\x3c/label>\x3cselect id="e_customer">${STATE.customers.filter(x=>!x.archived_at||String(x.id)===String(p.customer_id)).map(x=> `\x3coption value="${x.id}" ${String(x.id)===String(p.customer_id)?'selected':''}>${x.customer_code} ${x.name}\x3c/option>`).join('')}\x3c/select>\x3c/div>
-          \x3cdiv class="field">\x3clabel>Posting date\x3c/label>\x3cinput id="e_at" type="datetime-local" value="${new Date(p.purchase_at).toISOString().slice(0,16)}">\x3c/div>
+          \x3cdiv class="field">\x3clabel>Posting date \x3cspan class="field-hint">Asia/Bangkok\x3c/span>\x3c/label>\x3cinput id="e_at" type="datetime-local" value="${localDateTime(p.purchase_at)}">\x3c/div>
           \x3cdiv class="field">\x3clabel>Note\x3c/label>\x3cinput id="e_note" value="${p.note||''}">\x3c/div>
           \x3clabel style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="e_redeem" ${Number(p.points_used)>0 ? 'checked' : ''}> Redeem 8 points for 8%\x3c/label>
           \x3cdiv id="e_lines">\x3c/div>\x3cbutton class="btn btn-sec btn-sm" id="e_addLine">Add line\x3c/button>

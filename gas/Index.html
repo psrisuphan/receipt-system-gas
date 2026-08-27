@@ -151,34 +151,23 @@
   </div>
   <div class="shellbar-search"><input id="globalSearch" aria-label="Search receipts or customers" placeholder="Search receipts or customers…"><span class="shellbar-kbd">⌘K</span></div>
   <div class="shellbar-actions">
-    <button class="shellbar-icon" title="Notifications">◈</button>
-    <button class="shellbar-icon" onclick="document.querySelector('.sidebar').classList.toggle('open')" title="Menu">☰</button>
-    <div class="shellbar-user">
-      <div class="shellbar-avatar" id="actorAvatar">—</div>
-      <div style="line-height:1"><strong id="actorName" style="font-size:12px">—</strong><span id="actorEmail" style="font-size:11px;color:#9fb0d0">—</span></div>
-    </div>
+    <a class="btn btn-primary btn-sm" href="#new">New receipt</a>
+    <button class="shellbar-icon menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')" title="Menu" aria-label="Open menu">Menu</button>
   </div>
 </header>
 <div class="app">
   <aside class="sidebar">
     <div class="sidebar-scroll">
-      <div class="nav-group">Workspace</div>
-      <a class="nav-link" href="#dashboard" data-route="dashboard"><span class="nav-icon">▦</span> Dashboard <span class="nav-count" id="navDashCount">—</span></a>
-      <a class="nav-link" href="#new" data-route="new"><span class="nav-icon">＋</span> Create Receipt <span class="nav-count" style="background:var(--primary);color:#fff;border-color:var(--primary)">New</span></a>
-      <div class="nav-group">Operations</div>
-      <a class="nav-link" href="#history" data-route="history"><span class="nav-icon">≡</span> Receipt History <span class="nav-count" id="navHistCount">—</span></a>
-      <a class="nav-link" href="#customers" data-route="customers"><span class="nav-icon">◯</span> Customers <span class="nav-count" id="navCustCount">—</span></a>
-      <a class="nav-link" href="#services" data-route="services"><span class="nav-icon">⬢</span> Catalog <span class="nav-count" id="navSvcCount">—</span></a>
-      <div class="nav-group">Governance</div>
-      <a class="nav-link" href="#audit" data-route="audit"><span class="nav-icon">◎</span> Audit Log</a>
-      <a class="nav-link" href="#settings" data-route="settings"><span class="nav-icon">⚙</span> Settings</a>
-    </div>
-    <div class="sidebar-foot">
-      <div class="insight">
-        <div class="insight-label">Modern Ops • Live</div>
-        <strong id="insightTitle">Sales +12% vs last 30d</strong>
-        <p id="insightDesc">Top category driving growth — check dashboard for breakdown.</p>
-      </div>
+      <div class="nav-group">Overview</div>
+      <a class="nav-link" href="#dashboard" data-route="dashboard">Dashboard <span class="nav-count" id="navDashCount">—</span></a>
+      <a class="nav-link" href="#new" data-route="new">New receipt</a>
+      <div class="nav-group">Manage</div>
+      <a class="nav-link" href="#history" data-route="history">Receipt History <span class="nav-count" id="navHistCount">—</span></a>
+      <a class="nav-link" href="#customers" data-route="customers">Customers <span class="nav-count" id="navCustCount">—</span></a>
+      <a class="nav-link" href="#services" data-route="services">Catalog <span class="nav-count" id="navSvcCount">—</span></a>
+      <div class="nav-group">Control</div>
+      <a class="nav-link" href="#audit" data-route="audit">Audit log</a>
+      <a class="nav-link" href="#settings" data-route="settings">Settings</a>
     </div>
   </aside>
   <main class="main">
@@ -300,8 +289,9 @@ function viewDashboard(){
      \x3cdiv class="table-wrap">\x3ctable>\x3cthead>\x3ctr>\x3cth>Receipt\x3c/th>\x3cth>Customer\x3c/th>\x3cth>Date\x3c/th>\x3cth style="text-align:right">Amount\x3c/th>\x3cth>Status\x3c/th>\x3cth>\x3c/th>\x3c/tr>\x3c/thead>
     \x3ctbody>${STATE.purchases.slice(0,8).map(p=>{
       const c=STATE.customers.find(x=>String(x.id)===String(p.customer_id));
-      return `\x3ctr>\x3ctd>\x3cdiv style="font-weight:700;font-family:var(--mono);font-size:12px">${p.receipt_number}\x3c/div>\x3cdiv style="font-size:11px;color:var(--muted)">${p.id.slice(0,8)}\x3c/div>\x3c/td>\x3ctd>\x3cdiv style="font-weight:600">${c?c.name:'—'}\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${c?c.customer_code:''} · ${c?c.line_id||c.x_account||'':''}\x3c/div>\x3c/td>\x3ctd>${dt(p.purchase_at)}\x3c/td>\x3ctd style="text-align:right;font-weight:700">${money(p.total_amount)}\x3cbr>\x3csmall class="muted">disc ${money(p.discount_amount)} · ${p.points_earned}pts\x3c/small>\x3c/td>\x3ctd>\x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">\x3cspan class="pill-dot">\x3c/span>${p.status==='completed'?'Posted':'Cancelled'}\x3c/span>\x3c/td>\x3ctd>\x3ca class="btn btn-sec btn-sm" href="#purchase/${p.id}">Object page\x3c/a>\x3c/td>\x3c/tr>`;
-    }).join('') || '\x3ctr>\x3ctd colspan=6 class="empty">No documents — \x3ca href="#new">Create receipt\x3c/a>\x3c/td>\x3c/tr>'}\x3c/tbody>\x3c/table>\x3c/div>
+      return `\x3ctr>\x3ctd>\x3cdiv style="font-weight:700;font-family:var(--mono);font-size:12px">${p.receipt_number}\x3c/div>\x3cdiv style="font-size:11px;color:var(--muted)">${p.id.slice(0,8)}\x3c/div>\x3c/td>\x3ctd>\x3cdiv style="font-weight:600">${c?c.name:'—'}\x3c/div>\x3cdiv style="font-size:12px;color:var(--muted)">${c?c.customer_code:''} · ${c?c.line_id||c.x_account||'':''}\x3c/div>\x3c/td>\x3ctd>${dt(p.purchase_at)}\x3c/td>\x3ctd style="text-align:right;font-weight:700">${money(p.total_amount)}\x3cbr>\x3csmall class="muted">disc ${money(p.discount_amount)} · ${p.points_earned}pts\x3c/small>\x3c/td>\x3ctd>\x3cspan class="pill ${p.status==='completed'?'pill-ok':'pill-cancel'}">\x3cspan class="pill-dot">\x3c/span>${p.status==='completed'?'Posted':'Cancelled'}\x3c/span>\x3c/td>\x3ctd>\x3ca class="btn btn-sec btn-sm" href="#purchase/${p.id}">View details\x3c/a>\x3c/td>\x3c/tr>`;
+     }).join('') || '\x3ctr>\x3ctd colspan=6 class="empty">No documents — \x3ca href="#new">Create receipt\x3c/a>\x3c/td>\x3c/tr>'}\x3c/tbody>\x3c/table>\x3c/div>
+    \x3c/div>
   \x3c/div>`;
 }
 function bindDashboard(){
@@ -334,7 +324,7 @@ function viewNew(){
   const custOpts=STATE.customers.filter(c=>!c.archived_at).map(c=> `\x3coption value="${c.id}">${c.customer_code} · ${c.name} (${STATE.balances[c.id]||0} pts)\x3c/option>`).join('');
   return `
   \x3cdiv class="page-header">
-    \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">\x3ca href="#dashboard">Home\x3c/a> › Create\x3c/div>\x3ch1>Create Receipt \x3cspan style="font-weight:400;color:var(--muted);font-size:13px">· ${STATE.store_name}-YYYY-000001 locked per fiscal year\x3c/span>\x3c/h1>\x3cp>Record a paid sale — every edit is audited and point-balanced.\x3c/p>\x3c/div>\x3c/div>
+     \x3cdiv class="page-header-top">\x3cdiv>\x3cdiv class="breadcrumb">\x3ca href="#dashboard">Home\x3c/a> › Create\x3c/div>\x3ch1>New receipt\x3c/h1>\x3cp>Posting date sets the receipt year. Changes are audited.\x3c/p>\x3c/div>\x3c/div>
   \x3c/div>
   \x3cdiv id="newMsg">\x3c/div>
   \x3cdiv style="display:grid;grid-template-columns:1.15fr .85fr;gap:14px;align-items:start">

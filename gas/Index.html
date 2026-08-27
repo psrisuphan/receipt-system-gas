@@ -333,17 +333,24 @@ function viewCustomerDetail(id){
   <div class="card"><b>LINE:</b> ${c.line_id||'—'} · <b>X:</b> ${c.x_account||'—'} · <b>แต้ม:</b> ${bal} · <b>หมายเหตุ:</b> ${c.notes||'—'}</div>
   <div class="card">
     <h3>ปรับแต้ม</h3>
-    <div class="row"><input id="pa_delta" type="number" placeholder="+/- แต้ม"><input id="pa_reason" placeholder="เหตุผล *"><button class="btn btn-primary" id="pa_go">บันทึก</button></div><div id="pa_msg"></div>
+    <div class="row"><input id="pa_delta" type="number" placeholder="+/- แต้ม"><input id="pa_reason" placeholder="เหตุผล *"><button class="btn btn-primary" id="pa_go" onclick="adjustPoints('${id}')">บันทึก</button></div><div id="pa_msg"></div>
   </div>
   <div class="card"><h3>ประวัติซื้อ (${purchases.length})</h3><table><thead><tr><th>ใบเสร็จ</th><th>วันที่</th><th>ยอดสุทธิ</th><th>แต้ม</th><th>สถานะ</th></tr></thead><tbody>${purchases.map(p=> `<tr><td><a href="#purchase/${p.id}">${p.receipt_number}</a></td><td>${dt(p.purchase_at)}</td><td>${money(p.total_amount)}</td><td>+${p.points_earned}/-${p.points_used}</td><td>${p.status}</td></tr>`).join('')}</tbody></table></div>
   <div class="card"><h3>Ledger</h3>${ledger.map(l=> `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>${l.entry_type} ${Number(l.points_delta)>0?'+':''}${l.points_delta} · ${l.reason||''}</span><small class="muted">${dt(l.created_at)}</small></div>`).join('')||'<span class="muted">ไม่มี</span>'}</div>
-  <script>document.getElementById('pa_go')?.addEventListener('click', async ()=>{
-    try{ await google.script.run.withSuccessHandler(()=>location.reload()).withFailureHandler(e=>alert(e)).apiAdjustPoints('${id}', document.getElementById('pa_delta').value, document.getElementById('pa_reason').value); }catch(e){alert(e)}
-  });<\/script>
-  <div class="card"><button class="btn btn-sec" onclick="document.getElementById('pa_go').click()">manual via prompt</button></div>
   `;
 }
 
+async function adjustPoints(customerId){
+  const id = customerId || (location.hash.split('/')[1]||'');
+  const delta = document.getElementById('pa_delta')?.value;
+  const reason = document.getElementById('pa_reason')?.value;
+  const msg = document.getElementById('pa_msg');
+  try{
+    const res = await call('apiAdjustPoints', id, Number(delta), reason);
+    if(msg) msg.innerHTML='<span class="success">ปรับแล้ว คงเหลือ '+res.points_balance+'</span>';
+    await refresh(); render();
+  }catch(e){ if(msg) msg.innerHTML='<span class="error">'+e+'</span>'; else alert(e); }
+}
 function viewServices(){
   return `
   <h1>บริการ / หมวดหมู่</h1>

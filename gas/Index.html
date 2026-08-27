@@ -185,11 +185,11 @@ function bindNew(){
     calc();
   }
   function calc(){
-    const redeem=document.getElementById('n_redeem')?.checked;
+    const redeem=(document.getElementById('n_redeem') && document.getElementById('n_redeem').checked);
     let sub=lines.reduce((s,l)=> s+Number(l.quantity||0)*Number(l.unit_price||0),0); sub=Math.round(sub*100)/100;
     const disc=redeem? Math.round(sub*0.08*100)/100:0; const total=Math.round((sub-disc)*100)/100;
     let pts=0; if(total<200) pts=0; else if(total<500) pts=2; else if(total<800) pts=4; else if(total<1000) pts=6; else pts=8;
-    document.getElementById('totals').innerHTML=`ยอดรวม ${money(sub)} ${redeem?`· ส่วนลด -${money(disc)}`:''} · <b>ยอดสุทธิ ${money(total)}</b> · แต้มที่จะได้ ${pts}`;
+    document.getElementById('totals').innerHTML=`ยอดรวม ${money(sub)} ${redeem ? '· ส่วนลด -'+money(disc) : ''} · <b>ยอดสุทธิ ${money(total)}</b> · แต้มที่จะได้ ${pts}`;
   }
   linesEl.addEventListener('change', e=>{
     const i=Number(e.target.dataset.i); if(isNaN(i)) return;
@@ -342,8 +342,8 @@ function viewCustomerDetail(id){
 
 async function adjustPoints(customerId){
   const id = customerId || (location.hash.split('/')[1]||'');
-  const delta = document.getElementById('pa_delta')?.value;
-  const reason = document.getElementById('pa_reason')?.value;
+  const delta = document.getElementById('pa_delta') ? document.getElementById('pa_delta').value : '';
+  const reason = document.getElementById('pa_reason') ? document.getElementById('pa_reason').value : '';
   const msg = document.getElementById('pa_msg');
   try{
     const res = await call('apiAdjustPoints', id, Number(delta), reason);
@@ -393,24 +393,24 @@ function viewPurchase(id){
     <div class="row"><div><b>ลูกค้า:</b> ${c?c.name:'—'}<br><b>วันที่ซื้อ:</b> ${dt(p.purchase_at)}<br><b>สร้างโดย:</b> ${p.created_by||'—'}</div>
     <div><b>ยอดรวม:</b> ${money(p.subtotal)}<br><b>ส่วนลด:</b> -${money(p.discount_amount)}<br><b>ยอดสุทธิ:</b> ${money(p.total_amount)}<br><b>แต้ม:</b> ใช้ ${p.points_used} ได้ ${p.points_earned}</div></div>
     <table style="margin-top:12px"><thead><tr><th>บริการ</th><th>จำนวน</th><th>ราคา</th><th>รวม</th></tr></thead><tbody>${items.map(it=> `<tr><td>${it.service_name}<br><small class="muted">${it.category_name}</small></td><td>${it.quantity}</td><td>${money(it.unit_price)}</td><td>${money(it.line_total)}</td></tr>`).join('')}</tbody></table>
-    ${p.note?`<p><b>หมายเหตุ:</b> ${p.note}</p>`:''}
+    ${p.note ? '<p><b>หมายเหตุ:</b> '+p.note+'</p>' : ''}
     <div class="row" style="margin-top:12px">
       <a class="btn btn-sec" href="#receipt/${p.id}">ดูใบเสร็จ</a>
-      ${p.status==='completed'?`<button class="btn btn-sec" id="btnEdit">แก้ไข</button><button class="btn btn-danger" id="btnCancel">ยกเลิก</button>`:''}
+      ${p.status==='completed' ? '<button class="btn btn-sec" id="btnEdit">แก้ไข</button><button class="btn btn-danger" id="btnCancel">ยกเลิก</button>' : ''}
     </div>
     <div id="editBox" class="hidden card" style="background:#f7f7fa">
       <h3>แก้ไข Purchase</h3>
       <label>ลูกค้า</label><select id="e_customer">${STATE.customers.filter(x=>!x.archived_at||String(x.id)===String(p.customer_id)).map(x=> `<option value="${x.id}" ${String(x.id)===String(p.customer_id)?'selected':''}>${x.customer_code} ${x.name}</option>`).join('')}</select>
       <label>วันเวลาซื้อ</label><input id="e_at" type="datetime-local" value="${new Date(p.purchase_at).toISOString().slice(0,16)}">
       <label>หมายเหตุ</label><input id="e_note" value="${p.note||''}">
-      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="e_redeem" ${Number(p.points_used)>0?'checked':''} style="width:auto"> ใช้ 8 แต้มลด 8%</label>
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="e_redeem" ${Number(p.points_used)>0 ? 'checked' : ''} style="width:auto"> ใช้ 8 แต้มลด 8%</label>
       <div id="e_lines"></div><button class="btn btn-sec" id="e_addLine">+ รายการ</button>
       <div style="margin-top:8px"><button class="btn btn-primary" id="e_save">บันทึกแก้ไข</button> <button class="btn btn-sec" id="e_cancel">ปิด</button></div>
       <div id="e_msg"></div>
     </div>
     <div class="card" style="margin-top:12px">
       <h3>หลักฐานโอน</h3>
-      ${ev?`<a target="_blank" href="https://drive.google.com/file/d/${ev.file_id}/view">ดูไฟล์ (${ev.original_filename})</a> <button class="btn btn-sec" id="evRemove">ลบ</button>`:'<span class="muted">ยังไม่มี</span>'}
+      ${ev ? '<a target="_blank" href="https://drive.google.com/file/d/'+ev.file_id+'/view">ดูไฟล์ ('+ev.original_filename+')</a> <button class="btn btn-sec" id="evRemove">ลบ</button>' : '<span class="muted">ยังไม่มี</span>'}
       <div style="margin-top:8px"><input type="file" id="evFile" accept="image/jpeg,image/jpg,image/png"> <button class="btn btn-primary" id="evUpload">อัปโหลด/แทนที่</button></div>
       <div id="evMsg"></div>
     </div>
@@ -419,14 +419,14 @@ function viewPurchase(id){
 }
 function afterPurchase(id){
   const p=STATE.purchases.find(x=>String(x.id)===String(id)); if(!p) return;
-  document.getElementById('btnCancel')?.addEventListener('click', async ()=>{
+  const _btnCancel=document.getElementById('btnCancel'); if(_btnCancel) _btnCancel.addEventListener('click', async ()=>{
     const reason=prompt('เหตุผลยกเลิก *'); if(!reason) return;
     if(!confirm('ยกเลิก '+p.receipt_number+' ? แต้มจะถูกย้อนกลับ')) return;
     try{ await call('apiCancelPurchase', id, reason); await refresh(); location.hash='#purchase/'+id; }catch(e){alert(e)}
   });
   const box=document.getElementById('editBox');
-  document.getElementById('btnEdit')?.addEventListener('click', ()=> box.classList.toggle('hidden'));
-  document.getElementById('e_cancel')?.addEventListener('click', ()=> box.classList.add('hidden'));
+  const _btnEdit=document.getElementById('btnEdit'); if(_btnEdit) _btnEdit.addEventListener('click', ()=> box.classList.toggle('hidden'));
+  const _eCancel=document.getElementById('e_cancel'); if(_eCancel) _eCancel.addEventListener('click', ()=> box.classList.add('hidden'));
   // edit lines
   let items=STATE.items.filter(x=>String(x.purchase_id)===String(id)).map(it=> ({service_id:it.service_id, quantity:it.quantity, unit_price:it.unit_price}));
   if(!items.length) items=[{service_id:'',quantity:1,unit_price:0}];
@@ -459,7 +459,7 @@ function afterPurchase(id){
       const f=document.getElementById('evFile').files[0]; if(!f) return alert('เลือกไฟล์');
       const b64=await toBase64(f); try{ await call('apiUploadEvidence', id, f.name, f.type, b64); await refresh(); location.hash='#purchase/'+id; }catch(e){ document.getElementById('evMsg').innerHTML='<div class="error">'+e+'</div>'; }
     };
-    document.getElementById('evRemove')?.addEventListener('click', async ()=>{ if(!confirm('ลบหลักฐาน?')) return; await call('apiRemoveEvidence', id); await refresh(); location.hash='#purchase/'+id; });
+    const _evRemove=document.getElementById('evRemove'); if(_evRemove) _evRemove.addEventListener('click', async ()=>{ if(!confirm('ลบหลักฐาน?')) return; await call('apiRemoveEvidence', id); await refresh(); location.hash='#purchase/'+id; });
   }
 }
 
@@ -471,15 +471,15 @@ function viewReceipt(id){
   return `
   <div style="display:flex;justify-content:space-between;align-items:center"><h1>ใบเสร็จ</h1><div><button class="btn btn-sec" onclick="window.print()">พิมพ์</button> <button class="btn btn-sec" onclick="downloadReceiptPdf()">PDF</button></div></div>
   <div class="receipt" id="receipt">
-    <div style="text-align:center">${STATE.store_name?`<strong>${STATE.store_name}</strong><br>`:''}<span>ใบเสร็จรับเงิน</span><br><small class="muted">เอกสารรับเงินภายในร้าน</small></div>
+    <div style="text-align:center">${STATE.store_name ? '<strong>'+STATE.store_name+'</strong><br>' : ''}<span>ใบเสร็จรับเงิน</span><br><small class="muted">เอกสารรับเงินภายในร้าน</small></div>
     <div class="rule"></div>
     <div style="font-size:13px"><b>เลขที่:</b> ${p.receipt_number}<br><b>วันที่:</b> ${dt(p.purchase_at)}<br><b>ลูกค้า:</b> ${c?c.name:'—'}<br><b>รหัส:</b> ${c?c.customer_code:'—'}</div>
     <div class="rule"></div>
     <table style="font-size:13px"><thead><tr><th>รายการ</th><th>จำนวน</th><th>ราคา</th><th>รวม</th></tr></thead><tbody>${items.map(it=> `<tr><td>${it.service_name}</td><td>${it.quantity}</td><td>${money(it.unit_price)}</td><td>${money(it.line_total)}</td></tr>`).join('')}</tbody></table>
     <div class="rule"></div>
-    <div style="font-size:14px"><div style="display:flex;justify-content:space-between"><span>ยอดรวม</span><span>${money(p.subtotal)}</span></div>${Number(p.discount_amount)>0?`<div style="display:flex;justify-content:space-between"><span>ส่วนลดสะสมแต้ม</span><span>-${money(p.discount_amount)}</span></div>`:''}<div style="display:flex;justify-content:space-between;font-weight:700"><span>ยอดสุทธิ</span><span>${money(p.total_amount)}</span></div></div>
+    <div style="font-size:14px"><div style="display:flex;justify-content:space-between"><span>ยอดรวม</span><span>${money(p.subtotal)}</span></div>${Number(p.discount_amount)>0 ? '<div style="display:flex;justify-content:space-between"><span>ส่วนลดสะสมแต้ม</span><span>-'+money(p.discount_amount)+'</span></div>' : ''}<div style="display:flex;justify-content:space-between;font-weight:700"><span>ยอดสุทธิ</span><span>${money(p.total_amount)}</span></div></div>
     <p style="text-align:center;font-size:12px" class="muted">ใช้แต้ม ${p.points_used} · ได้แต้ม ${p.points_earned} · คงเหลือ ${bal}</p>
-    ${p.status==='cancelled'?'<p style="text-align:center;color:var(--danger)">ยกเลิกใบเสร็จแล้ว</p>':''}
+    ${p.status==='cancelled' ? '<p style="text-align:center;color:var(--danger)">ยกเลิกใบเสร็จแล้ว</p>' : ''}
     <p style="text-align:center;font-size:13px">${STATE.receipt_footer||'ขอบคุณที่ใช้บริการครับ'}</p>
   </div>
   <div class="card"><a class="btn btn-sec" href="#purchase/${p.id}">กลับรายละเอียด</a></div>

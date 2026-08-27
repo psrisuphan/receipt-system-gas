@@ -3,7 +3,7 @@
 
 const SHEETS = {
   customers: ['id','customer_code','name','line_id','x_account','notes','archived_at','created_at','updated_at','created_by'],
-  game_categories: ['id','name','archived_at','created_at','updated_at','created_by'],
+  game_categories: ['id','name','color','archived_at','created_at','updated_at','created_by'],
   services: ['id','category_id','name','description','default_price','archived_at','created_at','updated_at','created_by'],
   purchases: ['id','receipt_year','receipt_sequence','receipt_number','customer_id','purchase_at','status','subtotal','discount_rate','discount_amount','total_amount','points_used','points_earned','note','created_by','updated_by','cancelled_at','cancelled_by','cancellation_reason','created_at','updated_at'],
   purchase_items: ['id','purchase_id','service_id','category_name','service_name','service_description','sort_order','quantity','unit_price','line_total','created_at'],
@@ -11,6 +11,12 @@ const SHEETS = {
   payment_evidence: ['id','purchase_id','file_id','mime_type','byte_size','original_filename','uploaded_by','uploaded_at'],
   audit_logs: ['id','actor_email','actor_name','event_type','entity_type','entity_id','summary','before_data','after_data','metadata','created_at'],
 };
+
+const CATEGORY_COLORS = ['#e8f2ef','#fef6ef','#eef2ff','#f3eefc','#fdf0ef','#fff4e6','#e6f7f5','#f5f7e8'];
+function nextCategoryColor_(){
+  const cats = getAll_('game_categories').filter(c=>!c.archived_at);
+  return CATEGORY_COLORS[cats.length % CATEGORY_COLORS.length];
+}
 
 function doGet() {
   const email = Session.getActiveUser().getEmail();
@@ -186,9 +192,22 @@ function setup(){
   // ensure header rows have correct columns (repair if mismatch)
   Object.keys(SHEETS).forEach(n=>{
     const sh = ss.getSheetByName(n);
-    const header = sh.getRange(1,1,1,SHEETS[n].length).getValues()[0];
+    const header = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].filter(v=>v);
     if(header.join(',')!==SHEETS[n].join(',')) {
-      sh.clear(); sh.appendRow(SHEETS[n]);
+      if(sh.getLastRow()===1){
+        sh.clear(); sh.appendRow(SHEETS[n]);
+      } else if(n==='game_categories' && header.join(',')==='id,name,archived_at,created_at,updated_at,created_by'){
+        const vals = sh.getDataRange().getValues();
+        const newVals = vals.map((row, idx)=>{
+          if(idx===0) return SHEETS[n];
+          return [row[0], row[1], '', row[2], row[3], row[4], row[5]];
+        });
+        sh.clear();
+        sh.getRange(1,1,newVals.length, SHEETS[n].length).setValues(newVals);
+      } else {
+        // migrate: keep data, just update header row
+        sh.getRange(1,1,1,SHEETS[n].length).setValues([SHEETS[n]]);
+      }
     }
   });
   // Drive folder
@@ -316,16 +335,20 @@ function apiUpsertCategory(payload){
   requireAdmin_();
   const name=String(payload.name||'').trim(); if(!name) throw new Error('Category name required');
   const cats=getAll_('game_categories');
+  const color = payload.color ? String(payload.color).trim() : null;
   if(payload.id){
     const cat=findById_('game_categories', payload.id); if(!cat) throw new Error('Category not found');
     if(cats.some(c=> !c.archived_at && String(c.id)!==String(payload.id) && String(c.name).trim().toLowerCase()===name.toLowerCase())) throw new Error('Category name exists');
-    updateRowById_('game_categories', payload.id, {name, updated_at: nowIso_()});
+    const patch={name, updated_at: nowIso_()};
+    if(color) patch.color = color;
+    updateRowById_('game_categories', payload.id, patch);
     const after=findById_('game_categories', payload.id);
     appendAudit_('category_updated','category',payload.id,'Updated category '+name,cat,after,{});
     return after;
   } else {
     if(cats.some(c=> !c.archived_at && String(c.name).trim().toLowerCase()===name.toLowerCase())) throw new Error('Category name exists');
-    const row={id:genId_(), name, archived_at:'', created_at: nowIso_(), updated_at: nowIso_(), created_by:getActor_().email};
+    const rowColor = color || nextCategoryColor_();
+    const row={id:genId_(), name, color: rowColor, archived_at:'', created_at: nowIso_(), updated_at: nowIso_(), created_by:getActor_().email};
     appendRow_('game_categories', row); appendAudit_('category_created','category',row.id,'Created category '+name,null,row,{}); return row;
   }
 }

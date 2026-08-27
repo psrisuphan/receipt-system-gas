@@ -219,6 +219,7 @@ let FILTER={q:'', status:'', customer:''};
 function money(n){ return new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB'}).format(Number(n||0)); }
 function dt(iso){ try{ return new Date(iso).toLocaleString('th-TH',{timeZone:'Asia/Bangkok', dateStyle:'medium', timeStyle:'short'});}catch(e){return iso} }
 function localDateTime(iso){ const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(iso)).reduce((o,p)=>(o[p.type]=p.value,o),{}); return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`; }
+const CATEGORY_COLORS=['#e8f2ef','#fef6ef','#eef2ff','#f3eefc','#fdf0ef','#fff4e6','#e6f7f5','#f5f7e8'];
 function updateClock(){ const el=document.getElementById('clock'); if(el) el.textContent=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date()); }
 function call(name, ...args){
   return new Promise((res,rej)=>{
@@ -326,11 +327,13 @@ function viewDashboard(){
       \x3cdiv class="card-pad">
         ${topCats.length ? `\x3cdiv style="height:200px">\x3ccanvas id="categoryChart">\x3c/canvas>\x3c/div>
         \x3cdiv class="category-list" style="margin-top:14px">
-          ${topCats.map(([name,val],i)=>`
-            \x3cdiv class="category-row">
-              \x3cdiv class="category-label">\x3cspan style="display:flex;align-items:center;gap:8px">\x3cspan style="width:8px;height:8px;border-radius:50%;background:${['#267565','#c78956','#287a57','#99621a'][i%4]}">\x3c/span>\x3cstrong>${name}\x3c/strong>\x3c/span>\x3cspan>${money(val)}\x3c/span>\x3c/div>
-            \x3c/div>
-          `).join('')}
+          ${topCats.map(([name,val],i)=>{
+            const cat=STATE.categories.find(c=>c.name===name);
+            const col=(cat&&cat.color)||CATEGORY_COLORS[i % CATEGORY_COLORS.length];
+            return `\x3cdiv class="category-row">
+              \x3cdiv class="category-label">\x3cspan style="display:flex;align-items:center;gap:8px">\x3cspan style="width:8px;height:8px;border-radius:50%;background:${col}">\x3c/span>\x3cstrong>${name}\x3c/strong>\x3c/span>\x3cspan>${money(val)}\x3c/span>\x3c/div>
+            \x3c/div>`;
+          }).join('')}
         \x3c/div>` : '\x3cdiv class="empty">No posted sales yet.\x3c/div>'}
          \x3cdiv class="divider">\x3c/div>
           \x3cdiv class="control-note">\x3cstrong>Controls\x3c/strong>\x3cspan>Immutable receipts · audited edits · retained cancellations.\x3c/span>\x3c/div>
@@ -379,10 +382,14 @@ function bindDashboard(){
       if(!pur) return; byCat[it.category_name]=(byCat[it.category_name]||0)+Number(it.line_total||0);
     });
     const topCats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    const catColors=topCats.map(([name],i)=>{
+      const cat=STATE.categories.find(c=>c.name===name);
+      return (cat&&cat.color)||CATEGORY_COLORS[i % CATEGORY_COLORS.length];
+    });
     if(typeof Chart !== 'undefined' && topCats.length){
       new Chart(catCanvas, {
         type:'pie',
-        data:{ labels: topCats.map(x=>x[0]), datasets:[{ data: topCats.map(x=>x[1]), backgroundColor:['#267565','#c78956','#287a57','#99621a'], borderWidth:1, borderColor:'#fff' }]},
+        data:{ labels: topCats.map(x=>x[0]), datasets:[{ data: topCats.map(x=>x[1]), backgroundColor:catColors, borderWidth:1, borderColor:'#fff' }]},
         options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=> c.label + ': ' + money(c.parsed) } } } }
       });
     }
@@ -710,7 +717,7 @@ function viewServices(){
       \x3cdiv class="card-pad stack">
         \x3cdiv class="form-grid" style="grid-template-columns:1fr auto">\x3cdiv class="field">\x3cinput id="cat_name" placeholder="New category">\x3c/div>\x3cbutton class="btn btn-primary btn-sm" id="cat_add">Add\x3c/button>\x3c/div>
         \x3cdiv id="cat_list" class="stack" style="gap:6px;margin-top:8px">
-          ${STATE.categories.filter(c=>!c.archived_at).map(c=> `\x3cdiv style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:8px">\x3cspan style="font-weight:600;font-size:13px">${c.name}\x3c/span>\x3cspan class="row">\x3cbutton class="btn btn-ghost btn-sm" data-cat-edit="${c.id}">Edit\x3c/button>\x3cbutton class="btn btn-ghost btn-sm" data-cat-arch="${c.id}" style="color:var(--danger)">Archive\x3c/button>\x3c/span>\x3c/div>`).join('') || '\x3cdiv class="empty">No categories\x3c/div>'}
+          ${STATE.categories.filter(c=>!c.archived_at).map(c=> `\x3cdiv style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px">\x3cbutton data-cat-color="${c.id}" title="Change color" style="width:16px;height:16px;border-radius:50%;background:${c.color||CATEGORY_COLORS[0]};border:1px solid var(--border-2);flex-shrink:0">\x3c/button>\x3cspan style="font-weight:600;font-size:13px;flex:1">${c.name}\x3c/span>\x3cspan class="row">\x3cbutton class="btn btn-ghost btn-sm" data-cat-edit="${c.id}">Edit\x3c/button>\x3cbutton class="btn btn-ghost btn-sm" data-cat-arch="${c.id}" style="color:var(--danger)">Archive\x3c/button>\x3c/span>\x3c/div>`).join('') || '\x3cdiv class="empty">No categories\x3c/div>'}
         \x3c/div>
       \x3c/div>
       \x3c/div>
@@ -734,8 +741,15 @@ function viewServices(){
 function bindServices(){
   document.getElementById('cat_add').onclick=async ()=>{ try{ await call('apiUpsertCategory', {name: document.getElementById('cat_name').value}); await refresh(); }catch(e){alert(e)} };
   document.getElementById('cat_list').onclick=async e=>{
+    if(e.target.dataset.catColor){
+      const cat=STATE.categories.find(x=>String(x.id)===String(e.target.dataset.catColor));
+      const idx=CATEGORY_COLORS.indexOf(cat.color||CATEGORY_COLORS[0]);
+      const next=CATEGORY_COLORS[(idx+1)%CATEGORY_COLORS.length];
+      await call('apiUpsertCategory', {id:cat.id, name:cat.name, color:next});
+      await refresh();
+    }
     if(e.target.dataset.catArch){ await call('apiArchiveCategory', e.target.dataset.catArch); await refresh(); }
-    if(e.target.dataset.catEdit){ const n=prompt('New name'); if(n) { await call('apiUpsertCategory', {id:e.target.dataset.catEdit, name:n}); await refresh(); } }
+    if(e.target.dataset.catEdit){ const n=prompt('New name'); if(n) { const cat=STATE.categories.find(x=>String(x.id)===String(e.target.dataset.catEdit)); await call('apiUpsertCategory', {id:e.target.dataset.catEdit, name:n, color:cat.color}); await refresh(); } }
   };
   document.getElementById('svc_add').onclick=async ()=>{
     try{ await call('apiUpsertService', {category_id: document.getElementById('svc_cat').value, name: document.getElementById('svc_name').value, default_price: document.getElementById('svc_price').value, description: document.getElementById('svc_desc').value}); await refresh(); }catch(e){alert(e)}
